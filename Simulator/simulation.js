@@ -27,6 +27,8 @@ const state = {
   maxPower: 7200,        // W
   maxCurrent: 30,        // A
   cableLimit: 30,        // Cable physical current rating (A)
+  tempLimit: Infinity,   // Dynamic connector temperature limit
+  evseMaxLimit: Infinity,// ISO 15118 EVSE constraint
   maxVoltage: 400,       // V
   ccCvTransition: 80,    // SoC %
   efficiency: 0.96,
@@ -38,6 +40,7 @@ const state = {
   power: 0,
   mode: '—',            // CC, CV, DONE
   lastCCCurrent: null,   // Actual current at CC→CV boundary for continuity
+  lastCCVoltage: null,   // Actual voltage at CC→CV boundary for ramp
 
   // Data arrays (for charting)
   dataTime: [],
@@ -201,12 +204,18 @@ function chargingStep(dt) {
     const iPowerLimit = (-vOcv + Math.sqrt(vOcv ** 2 + 4 * rInt * state.maxPower)) / (2 * rInt);
     // BMS derates current acceptance at high SoC to protect cells
     const iBMS = bmsCurrentLimit(soc, ahCapacity);
-    const iCC = Math.min(iPowerLimit, iBMS, state.cableLimit, state.maxCurrent);
+    
+    // Additional EVSE and Thermal limit constraints (DIN 70121 / ISO 15118)
+    const iTemp = state.tempLimit !== undefined ? state.tempLimit : Infinity;
+    const iEvse = state.evseMaxLimit !== undefined ? state.evseMaxLimit : Infinity;
+    
+    // The actual current delivered is the minimum of all constraints
+    const iCC = Math.min(iPowerLimit, iBMS, state.cableLimit, state.maxCurrent, iTemp, iEvse);
 
     // CP = power is genuinely binding when it's measurably below all hardware limits.
     // Level 2 AC: current limit always binds first — CP essentially never fires.
     // DC fast: power often limits before cable/BMS — CP is the realistic label here.
-    const otherLimits = Math.min(iBMS, state.cableLimit, state.maxCurrent);
+    const otherLimits = Math.min(iBMS, state.cableLimit, state.maxCurrent, iTemp, iEvse);
     if (iPowerLimit < otherLimits - 1.0) {
       state.mode = 'CP';
     } else {
@@ -217,26 +226,37 @@ function chargingStep(dt) {
     state.voltage = Math.min(vOcv + iCC * rInt, vMax); // cap at battery vMax
     state.power = state.voltage * state.current;
     state.lastCCCurrent = iCC; // store for CV entry continuity
+    state.lastCCVoltage = state.voltage; // store for CV voltage ramp
     state.currentSoC += ((state.current * dt) / 3600) / ahCapacity * 100;
 
   } else {
     // === CV MODE ===
     state.mode = 'CV';
 
-    state.voltage = vMax;
+    const progress = (soc - state.ccCvTransition) / Math.max(state.targetSoC - state.ccCvTransition, 1);
+    
+    // Ramp v_term from last CC terminal voltage → v_max over the first 10% of CV progress.
+    // This eliminates the one-timestep power spike caused by jumping straight to vMax
+    // while current is still at lastCCCurrent.
+    const iEntryVoltage = state.lastCCVoltage !== null ? state.lastCCVoltage : vMax;
+    state.voltage = Math.min(iEntryVoltage + (vMax - iEntryVoltage) * Math.min(progress * 10, 1.0), vMax);
 
-    const socPastTransition = (soc - state.ccCvTransition) / (100 - state.ccCvTransition);
     // Start exponential from actual last CC current, not maxCurrent, to avoid entry discontinuity
     const iEntry = state.lastCCCurrent !== null ? state.lastCCCurrent : state.maxCurrent;
-    const k = 3.5; // decay constant
-    let iCV = iEntry * Math.exp(-k * socPastTransition);
+    
+    // CV exponent: 3.5 is appropriate for fast chargers. Scale down for slow chargers.
+    const cRate = state.maxCurrent / ahCapacity;
+    const cvExponent = Math.max(1.5, Math.min(1.5 + 2.0 * cRate, 3.5)); // clip to [1.5, 3.5]
+    
+    let iCV = iEntry * Math.exp(-cvExponent * progress);
 
     // Max current battery can physically absorb at vMax given current OCV and R_int
-    const iPhysical = Math.max((vMax - vOcv) / rInt, 0);
+    const iPhysical = Math.max((vMax - vOcv) / Math.max(rInt, 0.001), 0);
     iCV = Math.min(iCV, iPhysical, state.maxCurrent);
 
-    // Cutoff current (typically C/20)
-    const cutoffCurrent = ahCapacity / 20;
+    // Cutoff current (standard C/20 but capped at 5% of charger max to ensure CV tail runs on slow chargers)
+    const cutoffCurrent = Math.min(ahCapacity / 20, state.maxCurrent * 0.05);
+    
     if (iCV < cutoffCurrent) {
       state.mode = 'DONE';
       state.current = 0;
@@ -262,9 +282,7 @@ function computeHarmonics() {
   // THD varies with operating mode
   let thdBase;
   if (mode === 'CC' || mode === 'CP') {
-    // THD is higher during CC/CP due to higher current
-    const progress = (soc - state.initialSoC) / (state.ccCvTransition - state.initialSoC);
-    thdBase = profile.thd_cc - (profile.thd_cc - profile.thd_cv) * 0.2 * Math.max(0, progress);
+    thdBase = profile.thd_cc;
   } else if (mode === 'CV') {
     if (profile.cv_thd_stable) {
       // Active PFC control loop holds THD at its CV-mode value regardless of load level
@@ -347,6 +365,7 @@ function resetSimulation() {
   state.power = 0;
   state.mode = '—';
   state.lastCCCurrent = null;
+  state.lastCCVoltage = null;
   state.dataTime = [];
   state.dataVoltage = [];
   state.dataCurrent = [];
