@@ -1,0 +1,125 @@
+# 📋 Meeting Prep — EV Charging Dynamic Characteristics
+**Date:** 4th March 2026 (Tomorrow)  
+**Topic Assigned:** Dynamic Charging Characteristics of EV Chargers  
+**Papers Reviewed:** 8 focused papers on CC-CV charging + broader literature survey
+
+---
+
+## 🗣️ What to Tell Your Guide
+
+### Opening — What You Did This Week
+
+> "Ma'am/Sir, I went through 8 research papers specifically on CC-CV charging methods for electric vehicles — covering both wired on-board chargers and wireless power transfer systems. I also surveyed the broader landscape of EV charging impacts on the grid. Here's what I found."
+
+---
+
+### 1. The Core Charging Behaviour — CC-CV
+
+The **Constant Current–Constant Voltage (CC-CV)** method is the industry standard for charging lithium-ion batteries in EVs. The charging happens in two distinct phases:
+
+| Phase | What Happens | SoC Range | Grid Perspective |
+|-------|-------------|-----------|-----------------|
+| **CC (Constant Current)** | Battery draws a fixed high current. Voltage rises gradually. | ~10–80% | **Heavy, steady load** on the grid — this is the high-power phase |
+| **CV (Constant Voltage)** | Voltage is capped at the upper limit. Current tapers down exponentially. | ~80–100% | **Decreasing load** — power drawn drops significantly |
+
+**Why this matters for your research:** The power drawn by an EV charger is **not constant** — it follows this CC-CV profile. This means the grid sees a **dynamic, time-varying load**, not a flat one. Any load modeling or harmonic analysis must account for this changing power draw.
+
+---
+
+### 2. Key Findings from the Papers
+
+#### A. Converter Topologies Determine the Charging Profile
+- The papers explored **LCL, LCC, and LLC resonant converter** topologies
+- Modern converters are being designed with **inherent CC-CV characteristics** — the resonant tank naturally transitions from current-source (CC) to voltage-source (CV) behaviour without complex control
+- This is important because: the converter topology directly determines **what the grid "sees"** in terms of current waveform, harmonics, and power factor
+
+#### B. Wired Chargers (5 papers) — Very High Efficiency
+- Best reported efficiency: **98.8%** (reconfigurable resonant converter, 2024)
+- These use **fixed-frequency** operation with **zero-voltage switching (ZVS)** and **zero-current switching (ZCS)**
+- Power levels tested: 100W to 3.6kW prototypes
+- Output voltage ranges: 50–400V (covering different battery architectures)
+
+#### C. Wireless Chargers (3 papers) — Lower Efficiency, Unique Challenges
+- Best wireless efficiency: **93.8%** (LCC-Series compensation, 150mm air gap)
+- Wireless systems face unique problems:
+  - **Power Null Phenomenon (PNP):** dead spots between transmitter coils where no power transfers
+  - **Misalignment sensitivity:** efficiency drops when Tx-Rx coils aren't centered
+  - Solution explored: **dual-receiver architecture** to eliminate dead spots
+- One paper showed **Power Balance Control** improved settling time from 600ms → 100ms
+
+#### D. Thermal-Aware Charging (1 paper) — Practical Improvement
+- A **Multi-Stage CC-CV under Constant Temperature (MSCC-CV-CT)** method
+- Monitors battery temperature, SoC, and internal resistance in real-time
+- Result: **20% faster charging** while keeping temperature rise lower (6.5°C vs 7.5°C)
+- This shows the CC-CV profile is not fixed — it can be **dynamically adapted** for better performance
+
+---
+
+### 3. How This Connects to Grid Impact & Harmonics
+
+> [!IMPORTANT]
+> This is the bridge between "charging characteristics" and your broader research on grid harmonics.
+
+1. **The power electronics in the charger (AC-DC rectifier + DC-DC converter) inject harmonics into the grid** — the switching frequency, topology, and operating mode (CC vs CV) all affect the harmonic spectrum
+
+2. **During CC mode** (high power), the charger draws the most current and produces the **highest harmonic content** — one paper confirmed that power losses are maximum during CC mode
+
+3. **Power Factor Correction (PFC)** stages at the front-end reduce harmonics, but the dynamic nature of CC-CV means the PFC must handle a **varying load** — this is harder than a fixed load
+
+4. **Fixed-frequency converters** (4 out of 5 wired papers) are better for the grid because:
+   - Predictable harmonic spectrum (easier to filter)
+   - Simpler EMI filter design
+   - Consistent current draw pattern
+
+5. **Multiple EVs charging simultaneously** with different SoC levels means the grid sees a **mix of CC and CV loads** — this creates a complex, time-varying harmonic profile at the Point of Common Coupling (PCC)
+
+---
+
+### 4. Summary Table of All Papers Reviewed
+
+| # | Paper | Year | Type | Key Contribution | Efficiency |
+|---|-------|------|------|-----------------|-----------|
+| 1 | Novel LCL Resonant Converter (IEEE TPEL) | 2023 | Wired | Inherent CC-CV at fixed frequency, no control needed | 96.7% |
+| 2 | Dual-Rx Semi-Dynamic Wireless (IEEE TTE) | 2024 | Wireless | Eliminates power null phenomenon with dual receivers | — |
+| 3 | CC-CV Wireless with PBC (IEEE Access) | 2025 | Wireless | Power Balance Control, SS outperforms PS control | 82% |
+| 4 | Fixed-Freq LCC Resonant Charger (IEEE TIE) | 2025 | Wired | Intrinsic CC-CV with zero extra components | 98.3% |
+| 5 | LCL Resonant CC-CV (IEEE INOCON) | 2023 | Wired | Design methodology for inherent CC-CV, 3.6kW | — |
+| 6 | LCC-Series Wireless Charger (IEEE TPEL) | 2022 | Wireless | Load-independent, no wireless comms needed | 93.8% |
+| 7 | Simple-Structure Resonant Converter (IEEE TTE) | 2024 | Wired | Dual resonant network, sync rectifier in CV | **98.8%** |
+| 8 | MSCC-CV-CT Thermal Charging (Springer EE) | 2023 | Wired | Temperature-aware multi-stage charging | 20% faster |
+
+---
+
+### 5. What You Plan to Do Next (Suggest This)
+
+> "Based on this review, I'd like to proceed with..."
+
+- [ ] **Model the CC-CV charging profile** mathematically — express power draw as a function of time/SoC
+- [ ] **Simulate the harmonic injection** during CC vs CV modes using a specific converter topology
+- [ ] **Analyze the aggregate effect** of multiple EVs at different SoC levels charging at a distribution transformer
+- [ ] **Compare fixed-frequency vs variable-frequency** converter impacts on THD at the PCC
+- [ ] Look into **IEEE 519 compliance** — do the harmonic levels exceed limits at high EV penetration?
+
+---
+
+### 6. Quick Answers to Likely Questions
+
+**Q: "What is the most common charging method?"**  
+→ CC-CV for Li-ion batteries. All 8 papers use it. Some papers propose multi-stage variations (MSCC-CV-CT) for thermal management.
+
+**Q: "What voltage/power levels are we talking about?"**  
+→ On-board chargers: 100W–3.6kW (Level 1-2). DC fast charging: 50–350kW (Level 3). Battery voltages: 48V–400V depending on vehicle architecture.
+
+**Q: "How does this relate to harmonics?"**  
+→ The power electronic converters (rectifiers + DC-DC stages) are non-linear loads. They draw non-sinusoidal current from the grid, injecting harmonics. The CC-CV profile means the harmonic content **changes** as the battery charges — it's not a static problem.
+
+**Q: "What's new in the literature?"**  
+→ The trend is toward **inherent CC-CV** topologies that don't need complex control — the resonant tank naturally provides the right output. This simplifies the converter but doesn't necessarily reduce grid harmonics. Also, wireless charging is growing but less efficient (82-94% vs 96-99% wired).
+
+**Q: "What gap did you identify?"**  
+→ Most papers focus on the converter design and efficiency. Very few analyze the **grid-side harmonic impact** of these dynamic charging profiles. There's a gap in modeling how the CC-CV transition affects THD at the PCC, especially with multiple simultaneous EV loads.
+
+---
+
+> [!TIP]
+> **Confidence tip:** You've read more papers this week than most students read in a month on this topic. You understand the CC-CV mechanism, the converter topologies, and the grid connection. Walk in with confidence. 💪

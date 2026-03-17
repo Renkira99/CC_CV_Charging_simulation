@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EV Charging Literature Review — ADHD-Friendly Guide</title>
+  <meta name="description"
+    content="Visual guide to finding research papers on EV dynamic charging characteristics and grid harmonics">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --card: #1a1a2e;
+      --card2: #16213e;
+      --border: #2a2a3e;
+      --text: #e8e8f0;
+      --text2: #a0a0b8;
+      --text3: #6a6a80;
+      --accent1: #6c5ce7;
+      --accent1g: #a29bfe;
+      --accent2: #00cec9;
+      --accent2g: #81ecec;
+      --accent3: #fd79a8;
+      --accent3g: #fab1c4;
+      --accent4: #fdcb6e;
+      --accent4g: #ffeaa7;
+      --accent5: #55efc4;
+      --accent5g: #a0f0d0;
+      --glow1: rgba(108, 92, 231, .15);
+      --glow2: rgba(0, 206, 201, .15);
+      --glow3: rgba(253, 121, 168, .15);
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      font-size: 17px
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      overflow-x: hidden
+    }
+
+    ::selection {
+      background: var(--accent1);
+      color: #fff
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg)
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent1);
+      border-radius: 8px
+    }
+
+    /* NAV */
+    .topnav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(10, 10, 15, .85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 0
+    }
+
+    .topnav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      overflow-x: auto;
+      scrollbar-width: none
+    }
+
+    .topnav-inner::-webkit-scrollbar {
+      display: none
+    }
+
+    .nav-pill {
+      padding: 8px 16px;
+      border-radius: 99px;
+      font-size: .78rem;
+      font-weight: 600;
+      text-decoration: none;
+      color: var(--text2);
+      border: 1px solid transparent;
+      white-space: nowrap;
+      transition: .3s
+    }
+
+    .nav-pill:hover,
+    .nav-pill.active {
+      color: #fff;
+      border-color: var(--accent1);
+      background: var(--glow1)
+    }
+
+    .nav-logo {
+      font-weight: 900;
+      font-size: 1rem;
+      color: var(--accent1g);
+      margin-right: auto;
+      white-space: nowrap
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 120px 24px 60px;
+      position: relative;
+      overflow: hidden
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--glow1), transparent 70%);
+      top: -200px;
+      right: -100px;
+      animation: float 8s ease-in-out infinite
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--glow2), transparent 70%);
+      bottom: -150px;
+      left: -100px;
+      animation: float 10s ease-in-out infinite reverse
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translate(0, 0)
+      }
+
+      50% {
+        transform: translate(30px, -30px)
+      }
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      border-radius: 99px;
+      background: var(--glow1);
+      border: 1px solid var(--accent1);
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--accent1g);
+      margin-bottom: 24px;
+      animation: fadeUp .6s ease
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 900;
+      line-height: 1.2;
+      max-width: 800px;
+      animation: fadeUp .6s ease .1s both
+    }
+
+    .hero h1 .gradient {
+      background: linear-gradient(135deg, var(--accent1g), var(--accent2g), var(--accent3g));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text
+    }
+
+    .hero p {
+      font-size: 1.1rem;
+      color: var(--text2);
+      max-width: 600px;
+      margin-top: 16px;
+      animation: fadeUp .6s ease .2s both
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    /* SECTIONS */
+    .section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 60px 24px
+    }
+
+    .section-header {
+      margin-bottom: 40px
+    }
+
+    .section-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 99px;
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px
+    }
+
+    .tag-purple {
+      background: var(--glow1);
+      color: var(--accent1g);
+      border: 1px solid rgba(108, 92, 231, .3)
+    }
+
+    .tag-teal {
+      background: var(--glow2);
+      color: var(--accent2g);
+      border: 1px solid rgba(0, 206, 201, .3)
+    }
+
+    .tag-pink {
+      background: var(--glow3);
+      color: var(--accent3g);
+      border: 1px solid rgba(253, 121, 168, .3)
+    }
+
+    .tag-yellow {
+      background: rgba(253, 203, 110, .12);
+      color: var(--accent4g);
+      border: 1px solid rgba(253, 203, 110, .3)
+    }
+
+    .tag-green {
+      background: rgba(85, 239, 196, .12);
+      color: var(--accent5g);
+      border: 1px solid rgba(85, 239, 196, .3)
+    }
+
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 800
+    }
+
+    /* CARDS */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      transition: .3s;
+      position: relative;
+      overflow: hidden
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent1)
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px
+    }
+
+    .card.purple::before {
+      background: linear-gradient(90deg, var(--accent1), var(--accent1g))
+    }
+
+    .card.teal::before {
+      background: linear-gradient(90deg, var(--accent2), var(--accent2g))
+    }
+
+    .card.pink::before {
+      background: linear-gradient(90deg, var(--accent3), var(--accent3g))
+    }
+
+    .card.yellow::before {
+      background: linear-gradient(90deg, var(--accent4), var(--accent4g))
+    }
+
+    .card-icon {
+      font-size: 2rem;
+      margin-bottom: 12px
+    }
+
+    .card h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 8px
+    }
+
+    .card p {
+      color: var(--text2);
+      font-size: .9rem
+    }
+
+    .card a {
+      color: var(--accent2g);
+      font-weight: 600;
+      text-decoration: none
+    }
+
+    .card a:hover {
+      text-decoration: underline
+    }
+
+    /* SEARCH QUERIES */
+    .query-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      overflow: hidden;
+      transition: .3s
+    }
+
+    .query-block:hover {
+      border-color: var(--accent2)
+    }
+
+    .query-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      gap: 12px
+    }
+
+    .query-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .85rem;
+      color: var(--accent2g);
+      flex: 1;
+      word-break: break-all
+    }
+
+    .copy-btn {
+      padding: 8px 18px;
+      border-radius: 99px;
+      border: 1px solid var(--accent2);
+      background: transparent;
+      color: var(--accent2g);
+      font-size: .75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .3s;
+      white-space: nowrap;
+      font-family: 'Inter', sans-serif
+    }
+
+    .copy-btn:hover {
+      background: var(--accent2);
+      color: var(--bg)
+    }
+
+    .copy-btn.copied {
+      background: var(--accent5);
+      border-color: var(--accent5);
+      color: var(--bg)
+    }
+
+    .query-label {
+      font-size: .7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text3);
+      padding: 0 20px 12px
+    }
+
+    /* PAPERS TABLE */
+    .papers-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px
+    }
+
+    .paper {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 20px 24px;
+      transition: .3s;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: start;
+      gap: 16px
+    }
+
+    .paper:hover {
+      border-color: var(--accent1);
+      transform: translateX(4px)
+    }
+
+    .paper-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: .85rem;
+      flex-shrink: 0
+    }
+
+    .paper-num.p {
+      background: var(--glow1);
+      color: var(--accent1g)
+    }
+
+    .paper-num.t {
+      background: var(--glow2);
+      color: var(--accent2g)
+    }
+
+    .paper-num.pk {
+      background: var(--glow3);
+      color: var(--accent3g)
+    }
+
+    .paper-body h4 {
+      font-size: .95rem;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 6px
+    }
+
+    .paper-body .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: .75rem
+    }
+
+    .pill {
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-weight: 600
+    }
+
+    .pill-year {
+      background: rgba(253, 203, 110, .12);
+      color: var(--accent4g)
+    }
+
+    .pill-source {
+      background: var(--glow1);
+      color: var(--accent1g)
+    }
+
+    .pill-focus {
+      background: var(--glow2);
+      color: var(--accent2g)
+    }
+
+    .paper-arrow {
+      color: var(--text3);
+      font-size: 1.2rem;
+      align-self: center
+    }
+
+    /* STEPS */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative
+    }
+
+    .steps::before {
+      content: '';
+      position: absolute;
+      left: 23px;
+      top: 40px;
+      bottom: 40px;
+      width: 2px;
+      background: linear-gradient(180deg, var(--accent1), var(--accent2), var(--accent3))
+    }
+
+    .step {
+      display: flex;
+      gap: 20px;
+      padding: 20px 0;
+      position: relative
+    }
+
+    .step-dot {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      z-index: 1
+    }
+
+    .step-dot.s1 {
+      background: var(--glow1);
+      color: var(--accent1g);
+      border: 2px solid var(--accent1)
+    }
+
+    .step-dot.s2 {
+      background: var(--glow2);
+      color: var(--accent2g);
+      border: 2px solid var(--accent2)
+    }
+
+    .step-dot.s3 {
+      background: var(--glow3);
+      color: var(--accent3g);
+      border: 2px solid var(--accent3)
+    }
+
+    .step-dot.s4 {
+      background: rgba(253, 203, 110, .12);
+      color: var(--accent4g);
+      border: 2px solid var(--accent4)
+    }
+
+    .step-dot.s5 {
+      background: rgba(85, 239, 196, .12);
+      color: var(--accent5g);
+      border: 2px solid var(--accent5)
+    }
+
+    .step-content h4 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 4px
+    }
+
+    .step-content p {
+      color: var(--text2);
+      font-size: .9rem
+    }
+
+    /* CONCEPTS */
+    .concept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px
+    }
+
+    .concept {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 18px 20px;
+      transition: .3s
+    }
+
+    .concept:hover {
+      border-color: var(--accent4)
+    }
+
+    .concept .label {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px
+    }
+
+    .concept .label.charging {
+      color: var(--accent1g)
+    }
+
+    .concept .label.harmonics {
+      color: var(--accent3g)
+    }
+
+    .concept h4 {
+      font-size: .95rem;
+      font-weight: 700;
+      margin-bottom: 4px
+    }
+
+    .concept p {
+      color: var(--text2);
+      font-size: .82rem;
+      line-height: 1.5
+    }
+
+    /* CHECKLIST */
+    .checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 10px
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: .3s;
+      user-select: none
+    }
+
+    .check-item:hover {
+      border-color: var(--accent5)
+    }
+
+    .check-item input {
+      display: none
+    }
+
+    .check-box {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      border: 2px solid var(--text3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: .3s;
+      flex-shrink: 0;
+      font-size: .9rem
+    }
+
+    .check-item input:checked~.check-box {
+      background: var(--accent5);
+      border-color: var(--accent5);
+      color: var(--bg)
+    }
+
+    .check-item input:checked~.check-label {
+      text-decoration: line-through;
+      color: var(--text3)
+    }
+
+    .check-label {
+      font-size: .9rem;
+      font-weight: 500
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: var(--surface);
+      border-radius: 99px;
+      margin-bottom: 20px;
+      overflow: hidden
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent5), var(--accent2));
+      border-radius: 99px;
+      transition: .5s ease
+    }
+
+    /* FOOTER */
+    .footer {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--text3);
+      font-size: .8rem;
+      border-top: 1px solid var(--border);
+      margin-top: 40px
+    }
+
+    /* DIVIDER */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 20px 0
+    }
+
+    /* RESPONSIVE */
+    @media(max-width:768px) {
+      .card-grid {
+        grid-template-columns: 1fr
+      }
+
+      .paper {
+        grid-template-columns: auto 1fr
+      }
+
+      .paper-arrow {
+        display: none
+      }
+
+      .concept-grid {
+        grid-template-columns: 1fr
+      }
+
+      .hero h1 {
+        font-size: 1.8rem
+      }
+    }
+
+    /* ANIMATIONS */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: .6s ease
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0)
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav class="topnav">
+    <div class="topnav-inner">
+      <span class="nav-logo">⚡ EV Review</span>
+      <a href="#where" class="nav-pill">Where to Search</a>
+      <a href="#queries" class="nav-pill">Search Queries</a>
+      <a href="#how" class="nav-pill">How to Filter</a>
+      <a href="#papers1" class="nav-pill">Charging Papers</a>
+      <a href="#papers2" class="nav-pill">Harmonics Papers</a>
+      <a href="#concepts" class="nav-pill">Key Concepts</a>
+      <a href="#checklist" class="nav-pill">Checklist</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge">📚 Literature Review Guide</div>
+    <h1>Find the Best Papers on <span class="gradient">EV Charging & Grid Harmonics</span></h1>
+    <p>Your ADHD-friendly, color-coded, copy-paste-ready guide to IEEE Xplore, ScienceDirect & Google Scholar</p>
+  </section>
+
+  <!-- WHERE TO SEARCH -->
+  <section class="section reveal" id="where">
+    <div class="section-header">
+      <div class="section-tag tag-purple">📍 Step 1</div>
+      <h2 class="section-title">Where to Get Papers</h2>
+    </div>
+    <div class="card-grid">
+      <div class="card purple">
+        <div class="card-icon">🔍</div>
+        <h3>Google Scholar</h3>
+        <p><strong>START HERE.</strong> Aggregates everything. Shows citation counts. Filter by year.</p>
+        <br><a href="https://scholar.google.com" target="_blank">scholar.google.com →</a>
+      </div>
+      <div class="card teal">
+        <div class="card-icon">🏛️</div>
+        <h3>IEEE Xplore</h3>
+        <p>Best for <strong>power electronics, converters, standards</strong>. Use university login for full text.</p>
+        <br><a href="https://ieeexplore.ieee.org" target="_blank">ieeexplore.ieee.org →</a>
+      </div>
+      <div class="card pink">
+        <div class="card-icon">📖</div>
+        <h3>ScienceDirect</h3>
+        <p>Elsevier journals — <strong>Applied Energy, Energy Reports</strong>. Institutional access needed.</p>
+        <br><a href="https://www.sciencedirect.com" target="_blank">sciencedirect.com →</a>
+      </div>
+      <div class="card yellow">
+        <div class="card-icon">🆓</div>
+        <h3>MDPI (Free!)</h3>
+        <p>100% <strong>open access</strong>. Journals: Energies, Electronics. No login needed!</p>
+        <br><a href="https://www.mdpi.com" target="_blank">mdpi.com →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEARCH QUERIES -->
+  <section class="section reveal" id="queries">
+    <div class="section-header">
+      <div class="section-tag tag-teal">🔎 Step 2</div>
+      <h2 class="section-title">Copy-Paste Search Queries</h2>
+    </div>
+
+    <h3 style="color:var(--accent1g);margin-bottom:16px;font-size:1.1rem">🔋 Topic 1 — Dynamic Charging Characteristics
+    </h3>
+
+    <div class="query-block">
+      <div class="query-top">
+        <span class="query-text">"electric vehicle" charging "constant current" OR "constant voltage" converter</span>
+        <button class="copy-btn" onclick="copyQuery(this)">📋 Copy</button>
+      </div>
+      <div class="query-label">CC-CV charging mode + converter design</div>
+    </div>
+    <div class="query-block">
+      <div class="query-top">
+        <span class="query-text">"EV charger" "power converter" topology review</span>
+        <button class="copy-btn" onclick="copyQuery(this)">📋 Copy</button>
+      </div>
+      <div class="query-label">Converter topologies for EV chargers</div>
+    </div>
+    <div class="query-block">
+      <div class="query-top">
+        <span class="query-text">"electric vehicle" "charging characteristics" "load profile" grid</span>
+        <button class="copy-btn" onclick="copyQuery(this)">📋 Copy</button>
+      </div>
+      <div class="query-label">EV load profiles and grid impact</div>
+    </div>
+    <div class="query-block">
+      <div class="query-top">
+        <span class="query-text">"electric vehicle" "dynamic charging" behavior OR characteristics</span>
+        <button class="copy-btn" onclick="copyQuery(this)">📋 Copy</button>
+      </div>
+      <div class="query-label">Dynamic charging behavior during charge cycles</div>
+    </div>
+    <div class="query-block">
+      <div class="query-top">
+        <span class="query-text">"bidirectional charger" V2G OR "vehicle to grid" "electric vehicle"</span>
+        <button class="copy-btn" onclick="copyQuery(this)">📋 Copy</button>
+      </div>
+      <div class="query-label">Vehicle-to-Grid bidirectional charging</div>
+    </div>
+    <div class="query-block">
+      <div class="query-top">
+        <span class="query-text">"EV charging" "DC fast" OR "Level 3" converter architecture</span>
+        <button class="copy-btn" onclick="copyQuery(this)">📋 Copy</button>
+      </div>
+      <div class="query-label">DC fast charging converter architecture</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <h3 style="color:var(--accent3g);margin-bottom:16px;font-size:1.1rem">⚡ Topic 2 — Harmonics Injected into Grid</h3>
+
+    <div class="query-block">
+      <div class="query-top">
+        <span class="query-text">"electric vehicle" charger harmonics "power quality" grid</span>
+        <button class="copy-btn" onclick="copyQuery(this)">📋 Copy</button>
+      </div>
+      <div class="query-label">Main harmonics + power quality query</div>
+    </div>
+    <div class="query-block">
+      <div class="query-top">
+        <span class="query-text">"EV charging" "total harmonic distortion" OR THD "distribution network"</span>
+        <button class="copy-btn" onclick="copyQuery(this)">📋 Copy</button>
+      </div>
+      <div class="query-label">THD in distribution networks</div>
+    </div>
+    <div class="query-block">
+      <div class="query-top">
+        <span class="query-text">"electric vehicle" charging harmonics "active filter" OR "passive filter"
+          mitigation</span>
+        <button class="copy-btn" onclick="copyQuery(this)">📋 Copy</button>
+      </div>
+      <div class="query-label">Harmonic mitigation with filters</div>
+    </div>
+    <div class="query-block">
+      <div class="query-top">
+        <span class="query-text">"electric vehicle" harmonics "IEEE 519" OR "IEC 61000" compliance</span>
+        <button class="copy-btn" onclick="copyQuery(this)">📋 Copy</button>
+      </div>
+      <div class="query-label">IEEE 519 / IEC 61000 standard compliance</div>
+    </div>
+    <div class="query-block">
+      <div class="query-top">
+        <span class="query-text">"EV charging station" "harmonic analysis" OR "harmonic impact" grid</span>
+        <button class="copy-btn" onclick="copyQuery(this)">📋 Copy</button>
+      </div>
+      <div class="query-label">Charging station harmonic analysis</div>
+    </div>
+    <div class="query-block">
+      <div class="query-top">
+        <span class="query-text">"electric vehicle" charger "power factor correction" OR PFC harmonics</span>
+        <button class="copy-btn" onclick="copyQuery(this)">📋 Copy</button>
+      </div>
+      <div class="query-label">PFC-based harmonic reduction in EV chargers</div>
+    </div>
+  </section>
+
+  <!-- HOW TO FILTER -->
+  <section class="section reveal" id="how">
+    <div class="section-header">
+      <div class="section-tag tag-pink">🎯 Step 3</div>
+      <h2 class="section-title">How to Find Recent + Highly Cited</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-dot s1">1</div>
+        <div class="step-content">
+          <h4>Paste query into Google Scholar</h4>
+          <p>Use any of the search queries above — just hit the copy button!</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot s2">2</div>
+        <div class="step-content">
+          <h4>Click "Since 2022" or "Since 2023"</h4>
+          <p>Left sidebar → Custom range. This filters out old papers instantly.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot s3">3</div>
+        <div class="step-content">
+          <h4>Check "Cited by X" under each result</h4>
+          <p><strong>50+ citations</strong> for 2023-2024 = great. <strong>200+</strong> for older = foundational.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot s4">4</div>
+        <div class="step-content">
+          <h4>Click "Cited by" to find newer related papers</h4>
+          <p>This is a goldmine — papers that cite a good paper are usually also good!</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot s5">5</div>
+        <div class="step-content">
+          <h4>Get full PDF via IEEE/ScienceDirect or ResearchGate</h4>
+          <p>Use uni login for IEEE/Elsevier. Check ResearchGate for free author uploads.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAPERS - TOPIC 1 -->
+  <section class="section reveal" id="papers1">
+    <div class="section-header">
+      <div class="section-tag tag-purple">🔋 Papers</div>
+      <h2 class="section-title">Dynamic Charging Characteristics</h2>
+    </div>
+    <div class="papers-list">
+      <div class="paper">
+        <div class="paper-num p">1</div>
+        <div class="paper-body">
+          <h4>A Comprehensive Review of EV Charging Technologies and Their Impact on the Electrical Grid</h4>
+          <div class="meta"><span class="pill pill-year">2023-2024</span><span class="pill pill-source">IEEE
+              Trans.</span><span class="pill pill-focus">CC/CV · Topologies · Grid Impact</span></div>
+        </div>
+        <div class="paper-arrow">→</div>
+      </div>
+      <div class="paper">
+        <div class="paper-num p">2</div>
+        <div class="paper-body">
+          <h4>DC Fast Charging Stations: Standards, Power Conversion Technologies, and Architecture</h4>
+          <div class="meta"><span class="pill pill-year">2023-2024</span><span class="pill pill-source">IEEE
+              Xplore</span><span class="pill pill-focus">Vienna Rectifier · 400V/800V · Fast Charging</span></div>
+        </div>
+        <div class="paper-arrow">→</div>
+      </div>
+      <div class="paper">
+        <div class="paper-num p">3</div>
+        <div class="paper-body">
+          <h4>Electric Vehicle-to-Vehicle (V2V) Power Transfer: Electrical and Communication Developments</h4>
+          <div class="meta"><span class="pill pill-year">2024</span><span class="pill pill-source">IEEE
+              Xplore</span><span class="pill pill-focus">LLC Converter · SiC · V2V</span></div>
+        </div>
+        <div class="paper-arrow">→</div>
+      </div>
+      <div class="paper">
+        <div class="paper-num p">4</div>
+        <div class="paper-body">
+          <h4>Twin-Stage Converter with Bridgeless Boost PFC and Full-Bridge LLC for EV Battery Charging</h4>
+          <div class="meta"><span class="pill pill-year">2023</span><span class="pill pill-source">IEEE
+              Xplore</span><span class="pill pill-focus">PFC · CC/CV Mode · Isolated Charging</span></div>
+        </div>
+        <div class="paper-arrow">→</div>
+      </div>
+      <div class="paper">
+        <div class="paper-num t">5</div>
+        <div class="paper-body">
+          <h4>Deep Reinforcement Learning-Based Algorithm for Real-Time EV Charging Under Dynamic Pricing</h4>
+          <div class="meta"><span class="pill pill-year">2023-2024</span><span class="pill pill-source">Applied
+              Energy</span><span class="pill pill-focus">AI Optimization · Load Shifting · Cost</span></div>
+        </div>
+        <div class="paper-arrow">→</div>
+      </div>
+      <div class="paper">
+        <div class="paper-num t">6</div>
+        <div class="paper-body">
+          <h4>Coordinated EV Charging Control for Peak Demand Reduction (40.8% Reduction Achieved)</h4>
+          <div class="meta"><span class="pill pill-year">2024</span><span
+              class="pill pill-source">ScienceDirect</span><span class="pill pill-focus">Peak Shaving · Scheduling ·
+              Substations</span></div>
+        </div>
+        <div class="paper-arrow">→</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAPERS - TOPIC 2 -->
+  <section class="section reveal" id="papers2">
+    <div class="section-header">
+      <div class="section-tag tag-pink">⚡ Papers</div>
+      <h2 class="section-title">Harmonics Injected into Grid</h2>
+    </div>
+    <div class="papers-list">
+      <div class="paper">
+        <div class="paper-num pk">1</div>
+        <div class="paper-body">
+          <h4>Harmonic Analysis of Grid-Connected Electric Vehicle Charging Stations</h4>
+          <div class="meta"><span class="pill pill-year">2025</span><span class="pill pill-source">IEEE
+              Conf.</span><span class="pill pill-focus">Suppression · Urban EVCSs</span></div>
+        </div>
+        <div class="paper-arrow">→</div>
+      </div>
+      <div class="paper">
+        <div class="paper-num pk">2</div>
+        <div class="paper-body">
+          <h4>Impact of Electric Vehicle Charging Station on Power Quality (SAPF Solution)</h4>
+          <div class="meta"><span class="pill pill-year">2024</span><span class="pill pill-source">IEEE
+              Conf.</span><span class="pill pill-focus">Non-linear Loads · Active Filter</span></div>
+        </div>
+        <div class="paper-arrow">→</div>
+      </div>
+      <div class="paper">
+        <div class="paper-num pk">3</div>
+        <div class="paper-body">
+          <h4>Location Optimization of EV Chargers & PV for Minimizing Voltage Harmonic Levels</h4>
+          <div class="meta"><span class="pill pill-year">2024</span><span class="pill pill-source">IEEE
+              Access</span><span class="pill pill-focus">Optimal Placement · LV Networks</span></div>
+        </div>
+        <div class="paper-arrow">→</div>
+      </div>
+      <div class="paper">
+        <div class="paper-num pk">4</div>
+        <div class="paper-body">
+          <h4>Review of Power Quality and Stability of EV Charging with Grid and PV Solar</h4>
+          <div class="meta"><span class="pill pill-year">Dec 2023</span><span
+              class="pill pill-source">ScienceDirect</span><span class="pill pill-focus">THD · PV Integration · Smart
+              Grid</span></div>
+        </div>
+        <div class="paper-arrow">→</div>
+      </div>
+      <div class="paper">
+        <div class="paper-num pk">5</div>
+        <div class="paper-body">
+          <h4>A Holistic Review of EV Charging Impacts on Power Distribution Networks</h4>
+          <div class="meta"><span class="pill pill-year">2026</span><span class="pill pill-source">Applied
+              Energy</span><span class="pill pill-focus">Harmonics · Mitigation · Future Directions</span></div>
+        </div>
+        <div class="paper-arrow">→</div>
+      </div>
+      <div class="paper">
+        <div class="paper-num pk">6</div>
+        <div class="paper-body">
+          <h4>EV Charging Infrastructure: Impacts of Photovoltaic Integration (THD 3%-28%)</h4>
+          <div class="meta"><span class="pill pill-year">2024</span><span class="pill pill-source">MDPI 🆓</span><span
+              class="pill pill-focus">THD Range · HF Converters · Overvoltage</span></div>
+        </div>
+        <div class="paper-arrow">→</div>
+      </div>
+      <div class="paper">
+        <div class="paper-num pk">7</div>
+        <div class="paper-body">
+          <h4>Comprehensive Review of EV Technology: Charging Infrastructure, Power Management & Control</h4>
+          <div class="meta"><span class="pill pill-year">2023-2024</span><span class="pill pill-source">MDPI
+              🆓</span><span class="pill pill-focus">Voltage Profile · Power Losses · Harmonics</span></div>
+        </div>
+        <div class="paper-arrow">→</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KEY CONCEPTS -->
+  <section class="section reveal" id="concepts">
+    <div class="section-header">
+      <div class="section-tag tag-yellow">🧠 Reference</div>
+      <h2 class="section-title">Key Concepts Cheat Sheet</h2>
+    </div>
+    <div class="concept-grid">
+      <div class="concept">
+        <div class="label charging">Charging</div>
+        <h4>CC-CV Charging</h4>
+        <p>Constant Current → Constant Voltage. Current stays flat, then voltage caps and current tapers off.</p>
+      </div>
+      <div class="concept">
+        <div class="label charging">Charging</div>
+        <h4>Charging Levels</h4>
+        <p>L1: 1.4kW (slow) · L2: 7-19kW (moderate) · L3/DC Fast: 50-350kW (fast)</p>
+      </div>
+      <div class="concept">
+        <div class="label charging">Charging</div>
+        <h4>Converter Topologies</h4>
+        <p>Vienna Rectifier · LLC Resonant · Full-Bridge · Interleaved Buck/Boost</p>
+      </div>
+      <div class="concept">
+        <div class="label charging">Charging</div>
+        <h4>V2G / V2V</h4>
+        <p>Vehicle-to-Grid & Vehicle-to-Vehicle. Bidirectional power flow using the EV battery.</p>
+      </div>
+      <div class="concept">
+        <div class="label harmonics">Harmonics</div>
+        <h4>THD</h4>
+        <p>Total Harmonic Distortion — measures waveform distortion as % of fundamental frequency.</p>
+      </div>
+      <div class="concept">
+        <div class="label harmonics">Harmonics</div>
+        <h4>IEEE 519</h4>
+        <p>The standard for harmonic limits at the Point of Common Coupling (PCC). Must comply.</p>
+      </div>
+      <div class="concept">
+        <div class="label harmonics">Harmonics</div>
+        <h4>Active Power Filter</h4>
+        <p>Real-time harmonic compensation. Injects anti-harmonics to cancel out distortion.</p>
+      </div>
+      <div class="concept">
+        <div class="label harmonics">Harmonics</div>
+        <h4>PFC (Power Factor Correction)</h4>
+        <p>Reduces harmonic content and improves power factor. Common in modern chargers.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHECKLIST -->
+  <section class="section reveal" id="checklist">
+    <div class="section-header">
+      <div class="section-tag tag-green">✅ Action Plan</div>
+      <h2 class="section-title">Your Checklist</h2>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="checklist" id="checklistContainer">
+      <label class="check-item"><input type="checkbox" onchange="updateProgress()"><span class="check-box">✓</span><span
+          class="check-label">Open Google Scholar and try each search query above</span></label>
+      <label class="check-item"><input type="checkbox" onchange="updateProgress()"><span class="check-box">✓</span><span
+          class="check-label">Filter to "Since 2023" for recent papers</span></label>
+      <label class="check-item"><input type="checkbox" onchange="updateProgress()"><span class="check-box">✓</span><span
+          class="check-label">Find 3-4 papers with 50+ citations for each topic</span></label>
+      <label class="check-item"><input type="checkbox" onchange="updateProgress()"><span class="check-box">✓</span><span
+          class="check-label">Get full PDFs via IEEE Xplore / ScienceDirect (uni login)</span></label>
+      <label class="check-item"><input type="checkbox" onchange="updateProgress()"><span class="check-box">✓</span><span
+          class="check-label">Check MDPI for free open-access papers</span></label>
+      <label class="check-item"><input type="checkbox" onchange="updateProgress()"><span class="check-box">✓</span><span
+          class="check-label">Try ResearchGate for free author-uploaded PDFs</span></label>
+      <label class="check-item"><input type="checkbox" onchange="updateProgress()"><span class="check-box">✓</span><span
+          class="check-label">Save papers in Zotero / Mendeley / EndNote</span></label>
+      <label class="check-item"><input type="checkbox" onchange="updateProgress()"><span class="check-box">✓</span><span
+          class="check-label">Read abstracts + conclusions first (skip methodology for now)</span></label>
+      <label class="check-item"><input type="checkbox" onchange="updateProgress()"><span class="check-box">✓</span><span
+          class="check-label">Mix foundational (200+ cites) + recent (2023-2025) papers</span></label>
+      <label class="check-item"><input type="checkbox" onchange="updateProgress()"><span class="check-box">✓</span><span
+          class="check-label">Include papers from BOTH IEEE and Elsevier in your review</span></label>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>⚡ EV Charging Literature Review Guide · Built for focus · Feb 2026</p>
+  </footer>
+
+  <script>
+    // Copy to clipboard
+    function copyQuery(btn) {
+      const text = btn.parentElement.querySelector('.query-text').textContent;
+      navigator.clipboard.writeText(text);
+      btn.textContent = '✅ Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = '📋 Copy'; btn.classList.remove('copied') }, 2000);
+    }
+
+    // Progress bar
+    function updateProgress() {
+      const checks = document.querySelectorAll('#checklistContainer input[type=checkbox]');
+      const checked = [...checks].filter(c => c.checked).length;
+      const pct = (checked / checks.length) * 100;
+      document.getElementById('progressFill').style.width = pct + '%';
+    }
+
+    // Scroll reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible') } });
+    }, { threshold: .1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Active nav
+    const navPills = document.querySelectorAll('.nav-pill');
+    const sections = document.querySelectorAll('.section');
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(s => { if (window.scrollY >= s.offsetTop - 200) current = s.getAttribute('id') });
+      navPills.forEach(p => { p.classList.remove('active'); if (p.getAttribute('href') === '#' + current) p.classList.add('active') });
+    });
+  </script>
+</body>
+
+</html>

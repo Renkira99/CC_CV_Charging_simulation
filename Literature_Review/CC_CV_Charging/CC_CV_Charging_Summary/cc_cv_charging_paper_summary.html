@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CC-CV Charging for EVs — Complete Paper Summaries</title>
+    <meta name="description"
+        content="ADHD-friendly visual summary of 8 research papers on CC-CV charging methods for electric vehicles">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg: #0C0F17;
+            --surface: #101020;
+            --card: #161630;
+            --card2: #1a1a3a;
+            --border: #2a2a4e;
+            --text: #e8e8f4;
+            --text2: #a0a0c0;
+            --text3: #606080;
+            --accent1: #6c5ce7;
+            --accent2: #00cec9;
+            --accent3: #fd79a8;
+            --accent4: #fdcb6e;
+            --accent5: #55efc4;
+            --glow1: rgba(108, 92, 231, .15);
+            --glow2: rgba(0, 206, 201, .15);
+            --glow3: rgba(253, 121, 168, .15);
+            --radius: 16px;
+            --radius-sm: 12px;
+        }
+
+        html {
+            scroll-behavior: smooth
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background:
+                radial-gradient(circle at 50% 20%, rgba(59, 130, 246, 0.08), transparent 50%),
+                linear-gradient(180deg, #0C0F17 0%, #0F172A 40%, #0C0F17 100%);
+            background-attachment: fixed;
+            color: var(--text);
+            line-height: 1.7;
+            font-size: 15px
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg)
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent1);
+            border-radius: 8px
+        }
+
+        /* NAV */
+        .topnav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(12, 15, 23, .9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 0
+        }
+
+        .topnav-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 24px;
+            overflow-x: auto
+        }
+
+        .nav-logo {
+            font-weight: 900;
+            font-size: 1.1rem;
+            margin-right: 8px;
+            white-space: nowrap
+        }
+
+        .nav-pill {
+            padding: 6px 14px;
+            border-radius: 99px;
+            font-size: .75rem;
+            font-weight: 600;
+            color: var(--text2);
+            text-decoration: none;
+            border: 1px solid transparent;
+            transition: .3s;
+            white-space: nowrap
+        }
+
+        .nav-pill:hover,
+        .nav-pill.active {
+            border-color: var(--accent1);
+            color: var(--accent1);
+            background: var(--glow1)
+        }
+
+        /* HERO */
+        .hero {
+            min-height: 55vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 120px 24px 60px;
+            position: relative;
+            overflow: hidden
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(108, 92, 231, .2), transparent 70%);
+            top: -200px;
+            right: -100px;
+            animation: pulse 4s ease-in-out infinite alternate
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(253, 121, 168, .15), transparent 70%);
+            bottom: -100px;
+            left: -50px;
+            animation: pulse 5s ease-in-out infinite alternate-reverse
+        }
+
+        @keyframes pulse {
+            from {
+                transform: scale(1);
+                opacity: .6
+            }
+
+            to {
+                transform: scale(1.2);
+                opacity: 1
+            }
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 99px;
+            background: var(--glow1);
+            border: 1px solid rgba(108, 92, 231, .3);
+            font-size: .8rem;
+            font-weight: 700;
+            color: var(--accent1);
+            margin-bottom: 24px;
+            animation: fadeUp .6s ease
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 900;
+            line-height: 1.2;
+            max-width: 850px;
+            animation: fadeUp .6s ease .1s both
+        }
+
+        .hero h1 .gradient {
+            background: linear-gradient(135deg, var(--accent1), var(--accent2), var(--accent3));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text
+        }
+
+        .hero p {
+            color: var(--text2);
+            max-width: 600px;
+            margin-top: 16px;
+            font-size: 1rem;
+            animation: fadeUp .6s ease .2s both
+        }
+
+        /* SECTIONS */
+        .section {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 60px 24px 40px
+        }
+
+        .section-header {
+            margin-bottom: 32px
+        }
+
+        .section-tag {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 99px;
+            font-size: .75rem;
+            font-weight: 700;
+            margin-bottom: 12px
+        }
+
+        .tag-purple {
+            background: var(--glow1);
+            color: var(--accent1);
+            border: 1px solid rgba(108, 92, 231, .3)
+        }
+
+        .tag-teal {
+            background: var(--glow2);
+            color: var(--accent2);
+            border: 1px solid rgba(0, 206, 201, .3)
+        }
+
+        .tag-pink {
+            background: var(--glow3);
+            color: var(--accent3);
+            border: 1px solid rgba(253, 121, 168, .3)
+        }
+
+        .tag-yellow {
+            background: rgba(253, 203, 110, .12);
+            color: var(--accent4);
+            border: 1px solid rgba(253, 203, 110, .3)
+        }
+
+        .tag-green {
+            background: rgba(85, 239, 196, .12);
+            color: var(--accent5);
+            border: 1px solid rgba(85, 239, 196, .3)
+        }
+
+        .section-title {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            font-weight: 900
+        }
+
+        /* OVERVIEW CARDS */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 40px
+        }
+
+        .ov-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            text-align: center;
+            transition: .3s
+        }
+
+        .ov-card:hover {
+            border-color: var(--accent2);
+            transform: translateY(-4px)
+        }
+
+        .ov-card .big {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent1), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text
+        }
+
+        .ov-card .label {
+            color: var(--text2);
+            font-size: .85rem;
+            margin-top: 4px;
+            font-weight: 600
+        }
+
+        /* TLDR */
+        .tldr {
+            background: linear-gradient(135deg, rgba(108, 92, 231, .08), rgba(0, 206, 201, .08));
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden
+        }
+
+        .tldr::before {
+            content: '⚡';
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            font-size: 6rem;
+            opacity: .08
+        }
+
+        .tldr h3 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: var(--accent4)
+        }
+
+        .tldr ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px
+        }
+
+        .tldr li {
+            padding-left: 28px;
+            position: relative;
+            font-size: .95rem
+        }
+
+        .tldr li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent2);
+            font-weight: 700
+        }
+
+        /* PAPER CARDS */
+        .paper-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 24px;
+            overflow: hidden;
+            transition: .3s
+        }
+
+        .paper-card:hover {
+            border-color: var(--accent1);
+            box-shadow: 0 8px 32px rgba(108, 92, 231, .1)
+        }
+
+        .paper-header {
+            padding: 24px 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            user-select: none
+        }
+
+        .paper-num {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1rem;
+            flex-shrink: 0
+        }
+
+        .paper-num.wired {
+            background: var(--glow1);
+            color: var(--accent1);
+            border: 2px solid var(--accent1)
+        }
+
+        .paper-num.wireless {
+            background: var(--glow2);
+            color: var(--accent2);
+            border: 2px solid var(--accent2)
+        }
+
+        .paper-num.thermal {
+            background: var(--glow3);
+            color: var(--accent3);
+            border: 2px solid var(--accent3)
+        }
+
+        .paper-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            line-height: 1.4;
+            flex: 1
+        }
+
+        .paper-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px
+        }
+
+        .pill {
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: .72rem;
+            font-weight: 700
+        }
+
+        .pill-year {
+            background: rgba(253, 203, 110, .12);
+            color: var(--accent4)
+        }
+
+        .pill-source {
+            background: var(--glow1);
+            color: var(--accent1)
+        }
+
+        .pill-type {
+            background: var(--glow2);
+            color: var(--accent2)
+        }
+
+        .pill-eff {
+            background: rgba(85, 239, 196, .12);
+            color: var(--accent5)
+        }
+
+        .toggle-icon {
+            font-size: 1.5rem;
+            color: var(--text3);
+            transition: .3s;
+            flex-shrink: 0;
+            margin-top: 8px
+        }
+
+        .paper-card.open .toggle-icon {
+            transform: rotate(180deg)
+        }
+
+        .paper-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .5s ease
+        }
+
+        .paper-card.open .paper-body {
+            max-height: 3000px
+        }
+
+        .paper-content {
+            padding: 0 28px 28px;
+            border-top: 1px solid var(--border)
+        }
+
+        /* CONTENT BLOCKS */
+        .block {
+            margin-top: 20px
+        }
+
+        .block-title {
+            font-size: .8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .block-title.problem {
+            color: var(--accent3)
+        }
+
+        .block-title.solution {
+            color: var(--accent2)
+        }
+
+        .block-title.how {
+            color: var(--accent1)
+        }
+
+        .block-title.results {
+            color: var(--accent5)
+        }
+
+        .block-title.takeaway {
+            color: var(--accent4)
+        }
+
+        .block p,
+        .block li {
+            color: var(--text2);
+            font-size: .9rem;
+            line-height: 1.7
+        }
+
+        .block ul {
+            list-style: none;
+            padding: 0
+        }
+
+        .block li {
+            padding: 4px 0 4px 20px;
+            position: relative
+        }
+
+        .block li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: var(--accent2);
+            font-weight: 700
+        }
+
+        /* KEY NUMBERS */
+        .key-nums {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px
+        }
+
+        .key-num {
+            padding: 8px 16px;
+            border-radius: 10px;
+            background: rgba(108, 92, 231, .08);
+            border: 1px solid rgba(108, 92, 231, .2);
+            font-size: .82rem;
+            font-weight: 700
+        }
+
+        .key-num span {
+            color: var(--accent5)
+        }
+
+        /* CONCEPT SECTION */
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px
+        }
+
+        .concept {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 22px;
+            transition: .3s
+        }
+
+        .concept:hover {
+            border-color: var(--accent4);
+            transform: translateY(-2px)
+        }
+
+        .concept .clabel {
+            font-size: .7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px
+        }
+
+        .concept .clabel.cc {
+            color: var(--accent1)
+        }
+
+        .concept .clabel.wpt {
+            color: var(--accent2)
+        }
+
+        .concept .clabel.batt {
+            color: var(--accent3)
+        }
+
+        .concept .clabel.topo {
+            color: var(--accent4)
+        }
+
+        .concept h4 {
+            font-size: .95rem;
+            font-weight: 700;
+            margin-bottom: 6px
+        }
+
+        .concept p {
+            color: var(--text2);
+            font-size: .82rem;
+            line-height: 1.6
+        }
+
+        /* COMPARISON TABLE */
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border)
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .8rem
+        }
+
+        th {
+            background: var(--card2);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 700;
+            white-space: nowrap;
+            color: var(--accent2);
+            border-bottom: 2px solid var(--border)
+        }
+
+        td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text2)
+        }
+
+        tr:hover td {
+            background: rgba(108, 92, 231, .05)
+        }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            padding: 60px 24px;
+            color: var(--text3);
+            font-size: .8rem;
+            border-top: 1px solid var(--border);
+            margin-top: 40px
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+            margin: 20px 0
+        }
+
+        /* RESPONSIVE */
+        @media(max-width:768px) {
+            .overview-grid {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .concept-grid {
+                grid-template-columns: 1fr
+            }
+
+            .paper-header {
+                flex-wrap: wrap
+            }
+
+            .hero h1 {
+                font-size: 1.8rem
+            }
+        }
+
+        /* ANIMATIONS */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: .6s ease
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav class="topnav">
+        <div class="topnav-inner">
+            <span class="nav-logo">🔋 CC-CV Papers</span>
+            <a href="#overview" class="nav-pill">Overview</a>
+            <a href="#tldr" class="nav-pill">TL;DR</a>
+            <a href="#papers" class="nav-pill">All 8 Papers</a>
+            <a href="#comparison" class="nav-pill">Comparison</a>
+            <a href="#concepts" class="nav-pill">Key Concepts</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-badge">📚 8 Papers · Complete Summaries</div>
+        <h1>CC-CV Charging for <span class="gradient">Electric Vehicles</span></h1>
+        <p>Every paper from your CC_CV_Charging folder — summarised, colour-coded, and expandable. Click any card to
+            read the full breakdown.</p>
+    </section>
+
+    <!-- OVERVIEW STATS -->
+    <section class="section reveal" id="overview">
+        <div class="section-header">
+            <div class="section-tag tag-purple">📊 At a Glance</div>
+            <h2 class="section-title">Collection Overview</h2>
+        </div>
+        <div class="overview-grid">
+            <div class="ov-card">
+                <div class="big">8</div>
+                <div class="label">Total Papers</div>
+            </div>
+            <div class="ov-card">
+                <div class="big">5</div>
+                <div class="label">Wired Charging</div>
+            </div>
+            <div class="ov-card">
+                <div class="big">3</div>
+                <div class="label">Wireless (WPT)</div>
+            </div>
+            <div class="ov-card">
+                <div class="big">98.8%</div>
+                <div class="label">Best Efficiency</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TL;DR -->
+    <section class="section reveal" id="tldr">
+        <div class="tldr">
+            <h3>⚡ TL;DR — What All 8 Papers Are About</h3>
+            <ul>
+                <li><strong>CC-CV charging</strong> = Constant Current first (charges battery fast), then Constant
+                    Voltage (tops it off safely). This is THE standard for Li-ion batteries in EVs.</li>
+                <li><strong>The big problem:</strong> Traditional LLC converters need wide frequency changes to do
+                    CC-CV, which kills efficiency and makes ZVS (soft switching) hard.</li>
+                <li><strong>The common solution:</strong> Use resonant converters (LCL, LCC, LC) that have
+                    <em>inherent</em> CC or CV characteristics at their resonant frequency — no complex control needed!
+                </li>
+                <li><strong>3 papers focus on wireless charging (WPT)</strong> — transmitting power through air gaps
+                    (100-200mm) using magnetic resonance coupling.</li>
+                <li><strong>1 paper tackles thermal management</strong> — a multi-stage CC-CV method that monitors
+                    battery temperature to charge 20% faster.</li>
+                <li><strong>Key achievement across papers:</strong> Efficiencies from 82% (wireless) to 98.8% (wired
+                    resonant) with ZVS/ZCS soft switching.</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ALL PAPERS -->
+    <section class="section reveal" id="papers">
+        <div class="section-header">
+            <div class="section-tag tag-teal">📄 Deep Dive</div>
+            <h2 class="section-title">All 8 Papers — Click to Expand</h2>
+        </div>
+
+        <!-- PAPER 1 -->
+        <div class="paper-card" onclick="togglePaper(this)">
+            <div class="paper-header">
+                <div class="paper-num wired">1</div>
+                <div>
+                    <div class="paper-title">A Novel LCL Resonant Converter With Inherent CC-CV Output for On-Board
+                        Chargers of Plug-In Electric Vehicles</div>
+                    <div class="paper-meta">
+                        <span class="pill pill-year">2023</span>
+                        <span class="pill pill-source">IEEE Trans. Power Electronics</span>
+                        <span class="pill pill-type">Wired · On-Board</span>
+                        <span class="pill pill-eff">η 96.7%</span>
+                    </div>
+                </div>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="paper-body">
+                <div class="paper-content">
+                    <div class="block">
+                        <div class="block-title problem">🔴 Problem</div>
+                        <p>Conventional LLC converters use pulse-frequency-modulation (PFM) to achieve CC-CV charging,
+                            but this requires a <strong>wide switching frequency range</strong>, causing poor efficiency
+                            and loss of zero-voltage-switching (ZVS) in CC mode.</p>
+                    </div>
+                    <div class="block">
+                        <div class="block-title solution">🟢 Solution</div>
+                        <p>A novel <strong>LCL resonant converter</strong> that operates at a <strong>fixed resonant
+                                frequency</strong> with inherent CC and CV output characteristics. As battery voltage
+                            increases during charging, the tank naturally transitions: LCL tank → CC mode, LC tank → CV
+                            mode.</p>
+                    </div>
+                    <div class="block">
+                        <div class="block-title how">🔵 How It Works</div>
+                        <ul>
+                            <li>Uses a reconfiguration rectifier circuit with a clamping branch</li>
+                            <li>At low battery voltage → LCL tank provides constant current output</li>
+                            <li>At high battery voltage → equivalent LC tank provides constant voltage output</li>
+                            <li>No sensing or control circuits needed for CC-CV transition — it's inherent!</li>
+                            <li>Wide ZVS for primary switches and ZCS for secondary diodes maintained</li>
+                        </ul>
+                    </div>
+                    <div class="block">
+                        <div class="block-title results">🟢 Key Results</div>
+                        <div class="key-nums">
+                            <div class="key-num">Power: <span>1 kW</span></div>
+                            <div class="key-num">Input: <span>400 V</span></div>
+                            <div class="key-num">Output: <span>250–400 V</span></div>
+                            <div class="key-num">Full-load η: <span>96.7%</span></div>
+                            <div class="key-num">CC mode η: <span>&gt;96%</span></div>
+                        </div>
+                    </div>
+                    <div class="block">
+                        <div class="block-title takeaway">💡 Key Takeaway</div>
+                        <p>Fixed-frequency operation + inherent CC-CV = <strong>simpler, cheaper, more reliable</strong>
+                            on-board charger. No need for complex feedback control for mode switching.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAPER 2 -->
+        <div class="paper-card" onclick="togglePaper(this)">
+            <div class="paper-header">
+                <div class="paper-num wireless">2</div>
+                <div>
+                    <div class="paper-title">An Inherent CC-CV Charging Architecture for Dual Receiver Semi-Dynamic
+                        Resonant Inductive Wireless EV Charging System</div>
+                    <div class="paper-meta">
+                        <span class="pill pill-year">2024</span>
+                        <span class="pill pill-source">IEEE Trans. Transportation Electrification</span>
+                        <span class="pill pill-type">Wireless · Semi-Dynamic</span>
+                    </div>
+                </div>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="paper-body">
+                <div class="paper-content">
+                    <div class="block">
+                        <div class="block-title problem">🔴 Problem</div>
+                        <p>Semi-dynamic wireless charging (charging while vehicle moves slowly or is parked) suffers
+                            from <strong>power null phenomenon (PNP)</strong> — dead spots where no power transfer
+                            happens — plus <strong>power fluctuations</strong> and poor efficiency.</p>
+                    </div>
+                    <div class="block">
+                        <div class="block-title solution">🟢 Solution</div>
+                        <ul>
+                            <li><strong>Dual receiver (Rx) coupling architecture</strong> eliminates PNP by ensuring
+                                continuous magnetic coupling</li>
+                            <li><strong>Inherent CC-CV hybrid compensation</strong> provides automatic charging profile
+                                without DC-DC chopper</li>
+                            <li><strong>PID feedback controller</strong> for optimal power delivery across multiple
+                                transmitter (Tx) coils</li>
+                            <li>Unipolar square pads with optimal spacing to maximize cross-coupling inductance</li>
+                        </ul>
+                    </div>
+                    <div class="block">
+                        <div class="block-title how">🔵 How It Works</div>
+                        <p>Multiple transmitter coils are embedded in the road/parking surface. Two receivers on the
+                            vehicle ensure that at least one is always coupled to a transmitter. The resonance magnetic
+                            field coupling (RMFC) architecture ensures coupling effectiveness along the entire charging
+                            lane. CC-CV output is achieved <strong>automatically</strong> even under misalignment
+                            conditions.</p>
+                    </div>
+                    <div class="block">
+                        <div class="block-title takeaway">💡 Key Takeaway</div>
+                        <p>Eliminates the need for complex DC-DC converters and control strategies. The <strong>dual-Rx
+                                architecture</strong> is key to solving the dead-spot problem in dynamic/semi-dynamic
+                            wireless charging.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAPER 3 -->
+        <div class="paper-card" onclick="togglePaper(this)">
+            <div class="paper-header">
+                <div class="paper-num wireless">3</div>
+                <div>
+                    <div class="paper-title">CC–CV Wireless EV Charging With Power Balance Control in Primary- and
+                        Secondary-Side Converters</div>
+                    <div class="paper-meta">
+                        <span class="pill pill-year">2025</span>
+                        <span class="pill pill-source">IEEE Access</span>
+                        <span class="pill pill-type">Wireless · WPT</span>
+                        <span class="pill pill-eff">η 82% (SS)</span>
+                    </div>
+                </div>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="paper-body">
+                <div class="paper-content">
+                    <div class="block">
+                        <div class="block-title problem">🔴 Problem</div>
+                        <p>Wireless EV charging systems using conventional PI controllers have <strong>slow settling
+                                times</strong> (400-600ms) and struggle with stable CC-CV operation across varying load
+                            conditions.</p>
+                    </div>
+                    <div class="block">
+                        <div class="block-title solution">🟢 Solution</div>
+                        <p><strong>Power Balance Control (PBC)</strong> applied to both primary-side (PS) and
+                            secondary-side (SS) converters. Tested with a 72V, 50Ah Li-ion NMC battery.</p>
+                    </div>
+                    <div class="block">
+                        <div class="block-title results">🟢 Key Results</div>
+                        <div class="key-nums">
+                            <div class="key-num">SS peak η: <span>82%</span></div>
+                            <div class="key-num">PS peak η: <span>77%</span></div>
+                            <div class="key-num">PS settling: <span>600→100ms</span></div>
+                            <div class="key-num">SS settling: <span>400→20ms</span></div>
+                            <div class="key-num">Battery: <span>72V 50Ah NMC</span></div>
+                        </div>
+                    </div>
+                    <div class="block">
+                        <div class="block-title takeaway">💡 Key Takeaway</div>
+                        <p><strong>Secondary-side control wins.</strong> SS converter adapts its input resistance to
+                            match the optimal load of the IPT coils, giving better efficiency AND faster response than
+                            primary-side control. Highest losses occur in CC mode (in coils and HF inverter).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAPER 4 -->
+        <div class="paper-card" onclick="togglePaper(this)">
+            <div class="paper-header">
+                <div class="paper-num wired">4</div>
+                <div>
+                    <div class="paper-title">Fixed-Frequency LCC Resonant Battery Charger With Inherent CC-CV Operation
+                        for Electric Vehicles</div>
+                    <div class="paper-meta">
+                        <span class="pill pill-year">2025</span>
+                        <span class="pill pill-source">IEEE Trans. Industrial Electronics</span>
+                        <span class="pill pill-type">Wired · Isolated</span>
+                        <span class="pill pill-eff">η 98.3%</span>
+                    </div>
+                </div>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="paper-body">
+                <div class="paper-content">
+                    <div class="block">
+                        <div class="block-title problem">🔴 Problem</div>
+                        <p>Existing resonant chargers need mode-change switches or extra components to transition
+                            between CC and CV modes, adding complexity and cost.</p>
+                    </div>
+                    <div class="block">
+                        <div class="block-title solution">🟢 Solution</div>
+                        <p>An isolated <strong>half-bridge LCC resonant charger</strong> that simultaneously uses the CC
+                            characteristic of LCC converters and CV characteristic of LC converters at resonant
+                            frequency — <strong>no mode-change switch needed</strong>.</p>
+                    </div>
+                    <div class="block">
+                        <div class="block-title how">🔵 How It Works</div>
+                        <ul>
+                            <li>LCC resonant tank inherently outputs constant current</li>
+                            <li>LC resonant tank inherently outputs constant voltage</li>
+                            <li>Combined topology transitions naturally as battery voltage rises</li>
+                            <li>ZVS at turn-ON for all inverter switches, ZCS at turn-OFF for all rectifier diodes</li>
+                            <li>Conventional PWM control for output voltage/current regulation</li>
+                        </ul>
+                    </div>
+                    <div class="block">
+                        <div class="block-title results">🟢 Key Results</div>
+                        <div class="key-nums">
+                            <div class="key-num">Power: <span>100 W</span></div>
+                            <div class="key-num">Input: <span>340 V</span></div>
+                            <div class="key-num">Output V: <span>50–90 V</span></div>
+                            <div class="key-num">Output I: <span>0.2–2 A</span></div>
+                            <div class="key-num">Max η: <span>98.3%</span></div>
+                        </div>
+                    </div>
+                    <div class="block">
+                        <div class="block-title takeaway">💡 Key Takeaway</div>
+                        <p>Intrinsic CC-CV with <strong>zero extra components</strong> for mode switching. Simplest
+                            structure among similar approaches with near-99% efficiency.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAPER 5 -->
+        <div class="paper-card" onclick="togglePaper(this)">
+            <div class="paper-header">
+                <div class="paper-num wired">5</div>
+                <div>
+                    <div class="paper-title">Inherent Constant Current Constant Voltage (CC-CV) Charging of Electric
+                        Vehicles By Using LCL Resonant Converter</div>
+                    <div class="paper-meta">
+                        <span class="pill pill-year">2023</span>
+                        <span class="pill pill-source">IEEE INOCON Conference</span>
+                        <span class="pill pill-type">Wired · On-Board</span>
+                    </div>
+                </div>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="paper-body">
+                <div class="paper-content">
+                    <div class="block">
+                        <div class="block-title problem">🔴 Problem</div>
+                        <p>Standard LLC converters with variable frequency control have a <strong>wide switching
+                                frequency range</strong> and also <strong>lose ZVS during CC charging mode</strong>.</p>
+                    </div>
+                    <div class="block">
+                        <div class="block-title solution">🟢 Solution</div>
+                        <p>An LCL resonant converter exploiting the <strong>inherent current-source and
+                                voltage-source</strong> characteristics of the LCL topology. Includes a design technique
+                            to achieve desired output voltage range in both CC and CV modes.</p>
+                    </div>
+                    <div class="block">
+                        <div class="block-title results">🟢 Key Results</div>
+                        <div class="key-nums">
+                            <div class="key-num">Power: <span>3.6 kW</span></div>
+                            <div class="key-num">Input: <span>250 V</span></div>
+                            <div class="key-num">Output: <span>126.3–168 V</span></div>
+                            <div class="key-num">ZVS: <span>✓ Full range</span></div>
+                        </div>
+                    </div>
+                    <div class="block">
+                        <div class="block-title takeaway">💡 Key Takeaway</div>
+                        <p>Provides a <strong>design methodology</strong> for LCL converters with natural CC-CV.
+                            Eliminates sensing/control circuits while maintaining ZVS across the entire charging range.
+                            Higher power (3.6kW) compared to other prototypes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAPER 6 -->
+        <div class="paper-card" onclick="togglePaper(this)">
+            <div class="paper-header">
+                <div class="paper-num wireless">6</div>
+                <div>
+                    <div class="paper-title">Load Independent Constant Current and Constant Voltage Control of
+                        LCC-Series Compensated Wireless EV Charger</div>
+                    <div class="paper-meta">
+                        <span class="pill pill-year">2022</span>
+                        <span class="pill pill-source">IEEE Trans. Power Electronics</span>
+                        <span class="pill pill-type">Wireless · WPT</span>
+                        <span class="pill pill-eff">η 93.8%</span>
+                    </div>
+                </div>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="paper-body">
+                <div class="paper-content">
+                    <div class="block">
+                        <div class="block-title problem">🔴 Problem</div>
+                        <p>Wireless EV chargers struggle with <strong>load-dependent performance</strong> — as the
+                            battery charges, its impedance changes, affecting current/voltage regulation and efficiency.
+                        </p>
+                    </div>
+                    <div class="block">
+                        <div class="block-title solution">🟢 Solution</div>
+                        <p><strong>LCC-Series compensation topology</strong> designed for load-independent operation. CC
+                            charging uses zero phase angle and soft switching. CV charging uses a <strong>semibridgeless
+                                active rectifier</strong> with pulse density modulation (PDM) control — no wireless
+                            communication needed!</p>
+                    </div>
+                    <div class="block">
+                        <div class="block-title results">🟢 Key Results</div>
+                        <div class="key-nums">
+                            <div class="key-num">Output V: <span>210 V</span></div>
+                            <div class="key-num">Output I: <span>5 A</span></div>
+                            <div class="key-num">Power: <span>1 kW</span></div>
+                            <div class="key-num">Air gap: <span>150 mm</span></div>
+                            <div class="key-num">Max η: <span>93.8%</span></div>
+                        </div>
+                    </div>
+                    <div class="block">
+                        <div class="block-title takeaway">💡 Key Takeaway</div>
+                        <p><strong>No wireless communication needed</strong> between primary and secondary sides.
+                            Load-independent operation means the charger performs consistently regardless of battery
+                            state. Best wireless efficiency in this collection at 93.8%.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAPER 7 -->
+        <div class="paper-card" onclick="togglePaper(this)">
+            <div class="paper-header">
+                <div class="paper-num wired">7</div>
+                <div>
+                    <div class="paper-title">Simple-Structure Fixed-Frequency Isolated Resonant Converter for EV Battery
+                        Charger Applications With CC–CV Charge Method</div>
+                    <div class="paper-meta">
+                        <span class="pill pill-year">2024</span>
+                        <span class="pill pill-source">IEEE Trans. Transportation Electrification</span>
+                        <span class="pill pill-type">Wired · Isolated</span>
+                        <span class="pill pill-eff">η 98.8%</span>
+                    </div>
+                </div>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="paper-body">
+                <div class="paper-content">
+                    <div class="block">
+                        <div class="block-title problem">🔴 Problem</div>
+                        <p>CC-CV converters have output current variation in CC mode, and efficiency drops during CV
+                            mode due to lack of synchronous rectification.</p>
+                    </div>
+                    <div class="block">
+                        <div class="block-title solution">🟢 Solution</div>
+                        <p>A <strong>reconfigurable resonant converter (RC)</strong> with a dual resonant network. An
+                            auxiliary switch serves two purposes: blocks the feed-forward path in CC mode (minimizing
+                            current variation) and acts as a <strong>synchronous rectifier</strong> in CV mode (boosting
+                            efficiency).</p>
+                    </div>
+                    <div class="block">
+                        <div class="block-title how">🔵 How It Works</div>
+                        <ul>
+                            <li><strong>CC mode:</strong> LCC converter inherent CC characteristic at resonant frequency
+                            </li>
+                            <li><strong>CV mode:</strong> Series LC converter inherent CV characteristic at resonant
+                                frequency</li>
+                            <li>Auxiliary switch reconfigures the dual resonant network for mode transition</li>
+                            <li>Fixed frequency operation throughout</li>
+                            <li>ZVS for switches, ZCS for diodes</li>
+                        </ul>
+                    </div>
+                    <div class="block">
+                        <div class="block-title results">🟢 Key Results</div>
+                        <div class="key-nums">
+                            <div class="key-num">Power: <span>180 W</span></div>
+                            <div class="key-num">Input: <span>340 V</span></div>
+                            <div class="key-num">Output V: <span>50–90 V</span></div>
+                            <div class="key-num">Output I: <span>0.2–2 A</span></div>
+                            <div class="key-num">Max η: <span>98.8% 🏆</span></div>
+                        </div>
+                    </div>
+                    <div class="block">
+                        <div class="block-title takeaway">💡 Key Takeaway</div>
+                        <p><strong>Highest efficiency in the entire collection</strong> at 98.8%. The dual-purpose
+                            auxiliary switch is clever — it fixes CC-mode current variation AND boosts CV-mode
+                            efficiency with synchronous rectification.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAPER 8 -->
+        <div class="paper-card" onclick="togglePaper(this)">
+            <div class="paper-header">
+                <div class="paper-num thermal">8</div>
+                <div>
+                    <div class="paper-title">Multi-Stage Constant Current–Constant Voltage Under Constant Temperature
+                        (MSCC-CV-CT) Charging Technique for Li-ion Batteries in Light Weight EVs</div>
+                    <div class="paper-meta">
+                        <span class="pill pill-year">2023</span>
+                        <span class="pill pill-source">Springer · Electrical Engineering</span>
+                        <span class="pill pill-type">Thermal Management</span>
+                        <span class="pill pill-eff">20% Faster Charging</span>
+                    </div>
+                </div>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="paper-body">
+                <div class="paper-content">
+                    <div class="block">
+                        <div class="block-title problem">🔴 Problem</div>
+                        <p>Standard CC-CV charging doesn't consider <strong>battery temperature</strong>, leading to
+                            thermal degradation, reduced battery life, and slower charging. Fast charging generates
+                            excessive heat.</p>
+                    </div>
+                    <div class="block">
+                        <div class="block-title solution">🟢 Solution</div>
+                        <p>A <strong>Multi-Stage CC-CV under Constant Temperature (MSCC-CV-CT)</strong> method that uses
+                            cell temperature as the primary control metric. Combined with pulse current charging and a
+                            series resonant converter to further reduce temperature rise.</p>
+                    </div>
+                    <div class="block">
+                        <div class="block-title how">🔵 How It Works</div>
+                        <ul>
+                            <li>Closed-loop controller monitors battery <strong>SoC, temperature, and internal
+                                    resistance</strong></li>
+                            <li>Charging current is dynamically adapted based on thermal conditions</li>
+                            <li>Multi-stage current scheme: starts high, reduces as temperature rises</li>
+                            <li>Pulse current charging + series resonant converter further limit heat</li>
+                            <li>Can increase initial current above 2C for even faster charging</li>
+                        </ul>
+                    </div>
+                    <div class="block">
+                        <div class="block-title results">🟢 Key Results</div>
+                        <div class="key-nums">
+                            <div class="key-num">Charge time: <span>55.8 min</span> (vs 85 min CC-CV)</div>
+                            <div class="key-num">Temp rise: <span>6.5°C</span> (vs 7.5°C)</div>
+                            <div class="key-num">Speed: <span>20% faster</span></div>
+                            <div class="key-num">Temp reduction: <span>20%</span> at same time</div>
+                        </div>
+                    </div>
+                    <div class="block">
+                        <div class="block-title takeaway">💡 Key Takeaway</div>
+                        <p>The <strong>only paper in this collection focused on battery health.</strong>
+                            Temperature-aware charging is crucial for real-world EV applications. The 20% faster
+                            charging while keeping temperature lower is a significant practical improvement.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- COMPARISON TABLE -->
+    <section class="section reveal" id="comparison">
+        <div class="section-header">
+            <div class="section-tag tag-yellow">📊 Compare</div>
+            <h2 class="section-title">Side-by-Side Comparison</h2>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Topology</th>
+                        <th>Type</th>
+                        <th>Power</th>
+                        <th>Efficiency</th>
+                        <th>CC-CV Method</th>
+                        <th>Freq.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>LCL Resonant</td>
+                        <td>Wired</td>
+                        <td>1 kW</td>
+                        <td>96.7%</td>
+                        <td>Inherent</td>
+                        <td>Fixed</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Dual-Rx Hybrid Comp.</td>
+                        <td>Wireless</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>Inherent</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>PBC WPT</td>
+                        <td>Wireless</td>
+                        <td>~3.6 kW</td>
+                        <td>82%</td>
+                        <td>PBC Control</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>Half-Bridge LCC</td>
+                        <td>Wired</td>
+                        <td>100 W</td>
+                        <td>98.3%</td>
+                        <td>Inherent</td>
+                        <td>Fixed</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>LCL Resonant</td>
+                        <td>Wired</td>
+                        <td>3.6 kW</td>
+                        <td>—</td>
+                        <td>Inherent</td>
+                        <td>Fixed</td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td>LCC-Series WPT</td>
+                        <td>Wireless</td>
+                        <td>1 kW</td>
+                        <td>93.8%</td>
+                        <td>PDM Control</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>7</td>
+                        <td>Dual Resonant RC</td>
+                        <td>Wired</td>
+                        <td>180 W</td>
+                        <td>98.8%</td>
+                        <td>Reconfigured</td>
+                        <td>Fixed</td>
+                    </tr>
+                    <tr>
+                        <td>8</td>
+                        <td>Series Resonant + BMS</td>
+                        <td>Wired</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>MSCC-CV-CT</td>
+                        <td>—</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- KEY CONCEPTS -->
+    <section class="section reveal" id="concepts">
+        <div class="section-header">
+            <div class="section-tag tag-green">🧠 Reference</div>
+            <h2 class="section-title">Key Concepts Cheat Sheet</h2>
+        </div>
+        <div class="concept-grid">
+            <div class="concept">
+                <div class="clabel cc">CC-CV</div>
+                <h4>CC-CV Charging</h4>
+                <p><strong>Constant Current</strong> charges the battery at a fixed current until the voltage limit is
+                    reached. Then <strong>Constant Voltage</strong> holds voltage steady while current tapers to a
+                    cut-off value. This prevents overcharging and extends battery life.</p>
+            </div>
+            <div class="concept">
+                <div class="clabel topo">Topology</div>
+                <h4>LLC Resonant Converter</h4>
+                <p>Inductor-Inductor-Capacitor tank. High efficiency, widely used in OBCs. Problem: needs wide frequency
+                    range for CC-CV.</p>
+            </div>
+            <div class="concept">
+                <div class="clabel topo">Topology</div>
+                <h4>LCL Resonant Converter</h4>
+                <p>Inductor-Capacitor-Inductor tank. Inherently acts as a <strong>current source</strong> — perfect for
+                    CC mode without complex control.</p>
+            </div>
+            <div class="concept">
+                <div class="clabel topo">Topology</div>
+                <h4>LCC Resonant Converter</h4>
+                <p>Inductor-Capacitor-Capacitor tank. Inherent CC characteristic. When combined with LC (CV), gives
+                    automatic CC-CV transition.</p>
+            </div>
+            <div class="concept">
+                <div class="clabel cc">Switching</div>
+                <h4>ZVS / ZCS</h4>
+                <p><strong>Zero Voltage Switching</strong> &amp; <strong>Zero Current Switching</strong> — soft
+                    switching techniques that slash switching losses by switching when V or I is zero. Critical for high
+                    efficiency.</p>
+            </div>
+            <div class="concept">
+                <div class="clabel wpt">WPT</div>
+                <h4>Wireless Power Transfer</h4>
+                <p>Uses magnetic resonance coupling across an air gap (50-200mm). Compensation networks (LCC-S, SS,
+                    etc.) tune the system for efficient power transfer.</p>
+            </div>
+            <div class="concept">
+                <div class="clabel wpt">WPT</div>
+                <h4>Power Null Phenomenon</h4>
+                <p>Dead spots in dynamic wireless charging where the vehicle receiver passes between transmitter coils
+                    and receives <strong>zero power</strong>. Solved with dual receivers or overlapping coils.</p>
+            </div>
+            <div class="concept">
+                <div class="clabel batt">Battery</div>
+                <h4>Li-Ion Battery</h4>
+                <p>Dominant EV battery chemistry. High energy density, long life. Requires CC-CV charging to prevent
+                    overcharging (which causes thermal runaway and degradation).</p>
+            </div>
+            <div class="concept">
+                <div class="clabel batt">Battery</div>
+                <h4>State of Charge (SoC)</h4>
+                <p>The battery's "fuel gauge" — percentage of remaining capacity. CC mode charges from ~10-80% SoC fast,
+                    CV mode handles the last 80-100% carefully.</p>
+            </div>
+            <div class="concept">
+                <div class="clabel batt">Thermal</div>
+                <h4>Temperature Management</h4>
+                <p>Battery temperature rises during fast charging. MSCC-CV-CT method dynamically adjusts charging
+                    current based on temperature to prevent degradation.</p>
+            </div>
+            <div class="concept">
+                <div class="clabel cc">Control</div>
+                <h4>PWM vs PFM</h4>
+                <p><strong>PWM</strong> = fixed frequency, variable duty cycle. <strong>PFM</strong> = variable
+                    frequency. Fixed-frequency (PWM) converters are preferred because they simplify EMI filter design.
+                </p>
+            </div>
+            <div class="concept">
+                <div class="clabel wpt">Control</div>
+                <h4>Pulse Density Modulation</h4>
+                <p>Controls power by varying the number of active switching pulses per cycle. Used in Paper 6 for
+                    load-independent CV regulation in wireless charging — no wireless communication needed.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>🔋 CC-CV Charging Paper Summaries · 8 Papers · ADHD-Friendly · March 2026</p>
+    </footer>
+
+    <script>
+        function togglePaper(card) {
+            card.classList.toggle('open');
+        }
+
+        // Scroll reveal
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible') });
+        }, { threshold: .1 });
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // Active nav
+        const navPills = document.querySelectorAll('.nav-pill');
+        const sections = document.querySelectorAll('.section');
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(s => { if (window.scrollY >= s.offsetTop - 200) current = s.getAttribute('id') });
+            navPills.forEach(p => { p.classList.remove('active'); if (p.getAttribute('href') === '#' + current) p.classList.add('active') });
+        });
+    </script>
+</body>
+
+</html>
