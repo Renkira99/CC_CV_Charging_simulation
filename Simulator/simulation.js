@@ -589,10 +589,10 @@ function drawChart(canvasId, data, options) {
 
   if (!data || data.length === 0) {
     // Empty state placeholder
-    ctx.fillStyle = '#3a3a6a';
-    ctx.font = '500 13px Inter, sans-serif';
+    ctx.fillStyle = '#000';
+    ctx.font = '10pt "Times New Roman", Times, serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Start simulation to see data', W / 2, H / 2);
+    ctx.fillText('No data', W / 2, H / 2);
     return;
   }
 
@@ -617,41 +617,51 @@ function drawChart(canvasId, data, options) {
     return pad.top + plotH - ((val - yMin) / (yMax - yMin)) * plotH;
   }
 
-  // Grid lines
-  ctx.strokeStyle = 'rgba(42, 42, 69, 0.6)';
+  // Bounding box
+  ctx.strokeStyle = '#000';
   ctx.lineWidth = 1;
+  ctx.strokeRect(pad.left, pad.top, plotW, plotH);
+
+  // Y axis ticks & labels
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#000';
+  ctx.font = '9pt "Times New Roman", Times, serif';
   const yTicks = 5;
   for (let i = 0; i <= yTicks; i++) {
     const yVal = yMin + (yMax - yMin) * (i / yTicks);
     const y = mapY(yVal);
+    
+    // Inward ticks
     ctx.beginPath();
     ctx.moveTo(pad.left, y);
-    ctx.lineTo(W - pad.right, y);
+    ctx.lineTo(pad.left + 4, y);
+    ctx.moveTo(W - pad.right, y);
+    ctx.lineTo(W - pad.right - 4, y);
     ctx.stroke();
 
-    // Y label
-    ctx.fillStyle = '#6a6a8a';
-    ctx.font = '500 10px JetBrains Mono, monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText(yVal.toFixed(options.yDecimals || 0), pad.left - 8, y + 3);
+    ctx.fillText(yVal.toFixed(options.yDecimals || 0), pad.left - 6, y + 3);
   }
 
-  // X axis labels
+  // X axis labels & ticks
+  ctx.textAlign = 'center';
   const xTicks = 6;
   for (let i = 0; i <= xTicks; i++) {
     const xVal = xMin + (xMax - xMin) * (i / xTicks);
     const x = mapX(xVal);
-    ctx.fillStyle = '#6a6a8a';
-    ctx.font = '500 10px JetBrains Mono, monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(xVal.toFixed(0), x, H - pad.bottom + 20);
+
+    ctx.beginPath();
+    ctx.moveTo(x, pad.top + plotH);
+    ctx.lineTo(x, pad.top + plotH - 4);
+    ctx.moveTo(x, pad.top);
+    ctx.lineTo(x, pad.top + 4);
+    ctx.stroke();
+
+    ctx.fillText(xVal.toFixed(0), x, pad.top + plotH + 14);
   }
 
   // Axis labels
-  ctx.fillStyle = '#6a6a8a';
-  ctx.font = '600 11px Inter, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(options.xLabel || '', W / 2, H - 4);
+  ctx.font = '10pt "Times New Roman", Times, serif';
+  ctx.fillText(options.xLabel || '', pad.left + plotW / 2, H - 4);
   ctx.save();
   ctx.translate(14, pad.top + plotH / 2);
   ctx.rotate(-Math.PI / 2);
@@ -670,9 +680,9 @@ function drawChart(canvasId, data, options) {
     }
     if (transTime !== null) {
       const x = mapX(transTime);
-      ctx.strokeStyle = 'rgba(255, 200, 87, 0.5)';
+      ctx.strokeStyle = '#000';
       ctx.lineWidth = 1;
-      ctx.setLineDash([5, 5]);
+      ctx.setLineDash([2, 5]);
       ctx.beginPath();
       ctx.moveTo(x, pad.top);
       ctx.lineTo(x, pad.top + plotH);
@@ -680,10 +690,10 @@ function drawChart(canvasId, data, options) {
       ctx.setLineDash([]);
 
       // Label
-      ctx.fillStyle = 'rgba(255, 200, 87, 0.8)';
-      ctx.font = '600 9px Inter, sans-serif';
+      ctx.fillStyle = '#000';
+      ctx.font = '9pt "Times New Roman", Times, serif';
       ctx.textAlign = 'center';
-      ctx.fillText('CC → CV', x, pad.top - 8);
+      ctx.fillText('CC|CV', x, pad.top - 6);
     }
   }
 
@@ -694,10 +704,10 @@ function drawChart(canvasId, data, options) {
   for (let i = 1; i < data.length; i++) {
     ctx.lineTo(mapX(xData[i]), mapY(data[i]));
   }
-  const color = options.color || '#0d6efd';
+  const color = '#000';
 
   ctx.strokeStyle = color;
-  ctx.lineWidth = 1.5;
+  ctx.lineWidth = 1.2;
   ctx.lineJoin = 'round';
   ctx.stroke();
 
@@ -732,10 +742,10 @@ function drawBarChart(canvasId, labels, values, options) {
   ctx.clearRect(0, 0, W, H);
 
   if (!values || values.length === 0) {
-    ctx.fillStyle = '#3a3a6a';
-    ctx.font = '500 13px Inter, sans-serif';
+    ctx.fillStyle = '#000';
+    ctx.font = '10pt "Times New Roman", Times, serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Start simulation to see data', W / 2, H / 2);
+    ctx.fillText('No data', W / 2, H / 2);
     return;
   }
 
@@ -743,77 +753,75 @@ function drawBarChart(canvasId, labels, values, options) {
   const barW = plotW / values.length * 0.65;
   const gap = plotW / values.length * 0.35;
 
-  // Grid
-  ctx.strokeStyle = 'rgba(42, 42, 69, 0.6)';
+  // Bounding box
+  ctx.strokeStyle = '#000';
   ctx.lineWidth = 1;
+  ctx.strokeRect(pad.left, pad.top, plotW, plotH);
+
+  // Grid / Ticks
+  ctx.fillStyle = '#000';
+  ctx.font = '9pt "Times New Roman", Times, serif';
+  ctx.textAlign = 'right';
   for (let i = 0; i <= 4; i++) {
     const y = pad.top + plotH - (plotH * i / 4);
+    
+    // Inward ticks
     ctx.beginPath();
     ctx.moveTo(pad.left, y);
-    ctx.lineTo(W - pad.right, y);
+    ctx.lineTo(pad.left + 4, y);
+    ctx.moveTo(W - pad.right, y);
+    ctx.lineTo(W - pad.right - 4, y);
     ctx.stroke();
 
-    ctx.fillStyle = '#6a6a8a';
-    ctx.font = '500 10px JetBrains Mono, monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText((yMax * i / 4).toFixed(1), pad.left - 8, y + 3);
+    ctx.fillText((yMax * i / 4).toFixed(1), pad.left - 6, y + 3);
   }
 
-  // Limit line
+  // Limit line (IEC)
   if (options.limitLine) {
     const y = pad.top + plotH - (plotH * options.limitLine / yMax);
-    ctx.strokeStyle = 'rgba(255, 82, 82, 0.6)';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 4]);
     ctx.beginPath();
     ctx.moveTo(pad.left, y);
     ctx.lineTo(W - pad.right, y);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.fillStyle = 'rgba(255, 82, 82, 0.8)';
-    ctx.font = '600 9px Inter, sans-serif';
+    ctx.fillStyle = '#000';
+    ctx.font = '9pt "Times New Roman", Times, serif';
     ctx.textAlign = 'left';
-    ctx.fillText('IEC 61000-3-2 Limit', W - pad.right - 80, y - 6);
+    ctx.fillText('IEC Limit', W - pad.right - 50, y - 6);
   }
 
-  // Bars
-  const colors = options.colors || ['#7c6cf0', '#00d4c8', '#ff6b9d', '#ffc857', '#4ae0a0',
-    '#7c6cf0', '#00d4c8', '#ff6b9d', '#ffc857'];
+  // Bars (Grayscale)
+  const colors = ['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.2)'];
 
   values.forEach((val, i) => {
     const x = pad.left + (plotW / values.length) * i + gap / 2;
     const barH = (val / yMax) * plotH;
     const y = pad.top + plotH - barH;
 
-    const c = colors[i % colors.length];
-    ctx.fillStyle = c;
+    ctx.fillStyle = colors[i % colors.length];
 
-    // Rounded rect
-    const r = 4;
+    // Sharp rect
     ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + barW - r, y);
-    ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
-    ctx.lineTo(x + barW, pad.top + plotH);
-    ctx.lineTo(x, pad.top + plotH);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
+    ctx.rect(x, y, barW, barH);
     ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
 
 
     // Value on top
-    ctx.fillStyle = '#e8e8f4';
-    ctx.font = '600 9px JetBrains Mono, monospace';
+    ctx.fillStyle = '#000';
+    ctx.font = '8pt "Times New Roman", Times, serif';
     ctx.textAlign = 'center';
-    ctx.fillText(val.toFixed(1) + '%', x + barW / 2, y - 8);
+    ctx.fillText(val.toFixed(1), x + barW / 2, y - 4);
 
     // Label
-    ctx.fillStyle = '#6a6a8a';
-    ctx.font = '500 9px Inter, sans-serif';
-    ctx.textAlign = 'center';
+    ctx.font = '9pt "Times New Roman", Times, serif';
     ctx.save();
     ctx.translate(x + barW / 2, H - pad.bottom + 15);
     ctx.fillText(labels[i], 0, 0);
@@ -842,20 +850,27 @@ function drawWaveform(canvasId) {
   ctx.clearRect(0, 0, W, H);
 
   if (state.mode === '—' || state.mode === 'DONE') {
-    ctx.fillStyle = '#3a3a6a';
-    ctx.font = '500 13px Inter, sans-serif';
+    ctx.fillStyle = '#000';
+    ctx.font = '10pt "Times New Roman", Times, serif';
     ctx.textAlign = 'center';
-    ctx.fillText(state.mode === 'DONE' ? 'Charging complete' : 'Start simulation to see waveform', W / 2, H / 2);
+    ctx.fillText(state.mode === 'DONE' ? 'DONE' : 'No data', W / 2, H / 2);
     return;
   }
 
+  // Bounding Box
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(pad.left, pad.top, plotW, plotH);
+
   // Zero line
-  ctx.strokeStyle = 'rgba(42, 42, 69, 0.6)';
+  ctx.strokeStyle = '#000';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(pad.left, midY);
+  ctx.setLineDash([2, 4]);
   ctx.lineTo(W - pad.right, midY);
   ctx.stroke();
+  ctx.setLineDash([]);
 
   // Generate waveform: fundamental + harmonics
   const harm = computeHarmonics();
@@ -865,7 +880,7 @@ function drawWaveform(canvasId) {
 
   // Pure sine (reference)
   ctx.beginPath();
-  ctx.strokeStyle = 'rgba(106, 106, 138, 0.3)';
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
   ctx.lineWidth = 1;
   for (let i = 0; i <= points; i++) {
     const x = pad.left + (i / points) * plotW;
@@ -893,23 +908,23 @@ function drawWaveform(canvasId) {
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   }
 
-  const waveColor = (state.mode === 'CC' || state.mode === 'CP') ? '#0d6efd' : '#198754';
+  const waveColor = '#000';
   ctx.strokeStyle = waveColor;
-  ctx.lineWidth = 1.5;
+  ctx.lineWidth = 1.2;
   ctx.lineJoin = 'round';
   ctx.stroke();
 
   // Labels
-  ctx.fillStyle = '#6a6a8a';
-  ctx.font = '600 10px Inter, sans-serif';
+  ctx.fillStyle = '#000';
+  ctx.font = '9pt "Times New Roman", Times, serif';
   ctx.textAlign = 'center';
-  ctx.fillText(`Time (cycles at ${GRID_FREQ_HZ} Hz — Indian Grid)`, W / 2, H - 4);
+  ctx.fillText(`Time (cycles)`, W / 2, H - 4);
 
   // Mode label
-  ctx.fillStyle = waveColor;
-  ctx.font = '700 11px Inter, sans-serif';
+  ctx.fillStyle = '#000';
+  ctx.font = '9pt "Times New Roman", Times, serif';
   ctx.textAlign = 'right';
-  ctx.fillText((state.mode === 'DONE' ? 'DONE' : state.mode + ' Mode') + ' — THD: ' + harm.thd.toFixed(1) + '%', W - pad.right, pad.top + 14);
+  ctx.fillText((state.mode === 'DONE' ? 'DONE' : state.mode) + ' — THD: ' + harm.thd.toFixed(1) + '%', W - pad.right, pad.top + 14);
 }
 
 

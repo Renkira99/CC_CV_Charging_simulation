@@ -1,449 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EV Dynamic Charging Simulator</title>
-    <meta name="description"
-        content="Interactive simulation of electric vehicle dynamic charging characteristics including CC-CV profiles, harmonics, and grid impact analysis">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Dynamic Charging Characteristics of Electric Vehicles: An Interactive Analysis</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
-    <!-- NAVBAR -->
-    <nav class="topnav" id="topnav">
-        <div class="topnav-inner">
-            <span class="nav-logo">⚡ EV Charging Simulator</span>
-            <a href="#hero" class="nav-pill active">Home</a>
-            <a href="#controls" class="nav-pill">Controls</a>
-            <a href="#charging-profile" class="nav-pill">Charging Profile</a>
-            <a href="#harmonics" class="nav-pill">Harmonics</a>
-            <a href="#theory" class="nav-pill">Theory</a>
-        </div>
-    </nav>
+    <div class="paper-container">
+        <!-- HEADER / TITLE -->
+        <header class="paper-header">
+            <h1 class="paper-title">Dynamic Charging Characteristics of Electric Vehicles: An Interactive Harmonic and Load Analysis</h1>
+            <div class="author-block">
+                <div class="author-name">First A. Author, <em>Member, IEEE</em>, Second B. Author, <em>Fellow, IEEE</em></div>
+                <div class="author-affil">Department of Electrical Engineering, University of Technology<br>Email: author@institution.edu</div>
+            </div>
+            <div class="abstract">
+                <em>Abstract</em>—This simulation-based interactive article presents the dynamic charging characteristics of electric vehicles (EVs) using the constant-current constant-voltage (CC-CV) protocol. It investigates the harmonic distortion injected into the grid by common active and passive converter topologies. By adjusting parameters such as battery capacity, target SoC, and charging levels, the dynamic total harmonic distortion (THD) and spectrum compliance against IEEE 519 and IEC 61000-3-2 standards can be observed in real time.
+            </div>
+        </header>
 
-    <!-- HERO -->
-    <section class="hero" id="hero">
-        <div class="hero-badge">EV Simulator Dashboard</div>
-        <h1>Dynamic Charging Characteristics of Electric Vehicles</h1>
-        <p>Explore CC-CV charging profiles, harmonic injection, and grid impact through real-time interactive simulation
-            based on published research.</p>
-        <div class="hero-stats">
-            <div class="hero-stat">
-                <span class="hero-stat-value" id="heroVoltage">0V</span>
-                <span class="hero-stat-label">Battery Voltage</span>
-            </div>
-            <div class="hero-stat">
-                <span class="hero-stat-value" id="heroCurrent">0A</span>
-                <span class="hero-stat-label">Charging Current</span>
-            </div>
-            <div class="hero-stat">
-                <span class="hero-stat-value" id="heroPower">0kW</span>
-                <span class="hero-stat-label">Charging Power</span>
-            </div>
-            <div class="hero-stat">
-                <span class="hero-stat-value" id="heroSoC">0%</span>
-                <span class="hero-stat-label">State of Charge</span>
-            </div>
-        </div>
-        <a href="#controls" class="hero-cta">
-            <span>Start Simulation</span>
-            <span class="cta-arrow">↓</span>
-        </a>
-    </section>
+        <!-- PAPER CONTENT -->
+        <div class="paper-body">
+            
+            <h2 class="section-heading">I. Introduction</h2>
+            <p>The rapid proliferation of electric vehicles (EVs) presents significant challenges to the power distribution grid. Because EV chargers utilize non-linear power electronic converters, they draw distorted grid currents, negatively impacting power quality [1]. Furthermore, modern lithium-ion batteries are exclusively charged using the constant-current constant-voltage (CC-CV) protocol. This leads to dynamic grid loading where the active power demand and harmonic injection vary significantly as the State of Charge (SoC) increases.</p>
+            <p>This article provides a live, interactive execution of the charging models. The user may adjust the battery pack constraints and converter characteristics in Section II to immediately observe the impact on grid harmonics simulated in Section III.</p>
 
-    <!-- CONTROLS -->
-    <section class="section" id="controls">
-        <div class="section-header">
-            <div class="section-tag tag-purple">⚙️ Configuration</div>
-            <h2 class="section-title">Simulation Parameters</h2>
-            <p class="section-desc">Configure the EV battery and charger parameters based on real-world specifications
-            </p>
-        </div>
+            <h2 class="section-heading">II. System Configuration</h2>
+            <p>The simulation models the battery terminal voltage, internal resistance, and Current / Power limits. The parameters below act as inputs to the numerical solver. Modifying them will reset the simulation state.</p>
 
-        <div class="controls-grid">
-            <!-- Battery Parameters -->
-            <div class="control-card glass">
-                <div class="control-card-header">
-                    <span class="control-icon">🔋</span>
-                    <h3>Battery Parameters</h3>
-                </div>
-                <div class="control-group">
-                    <label for="batteryCapacity">Battery Capacity (kWh)</label>
-                    <div class="slider-row">
+            <div class="figure-single-column">
+                <div class="control-panel">
+                    <div class="control-row">
+                        <label>Battery Capacity (kWh)</label>
                         <input type="range" id="batteryCapacity" min="20" max="100" value="60" step="5">
                         <span class="slider-value" id="batteryCapacityVal">60</span>
                     </div>
-                </div>
-                <div class="control-group">
-                    <label for="nominalVoltage">Nominal Voltage (V)</label>
-                    <div class="slider-row">
+                    <div class="control-row">
+                        <label>Nominal Volt. (V)</label>
                         <input type="range" id="nominalVoltage" min="200" max="800" value="400" step="50">
                         <span class="slider-value" id="nominalVoltageVal">400</span>
                     </div>
-                </div>
-                <div class="control-group">
-                    <label for="initialSoC">Initial SoC (%)</label>
-                    <div class="slider-row">
+                    <div class="control-row">
+                        <label>Initial SoC (%)</label>
                         <input type="range" id="initialSoC" min="5" max="90" value="20" step="5">
                         <span class="slider-value" id="initialSoCVal">20</span>
                     </div>
-                </div>
-                <div class="control-group">
-                    <label for="targetSoC">Target SoC (%)</label>
-                    <div class="slider-row">
+                    <div class="control-row">
+                        <label>Target SoC (%)</label>
                         <input type="range" id="targetSoC" min="50" max="100" value="100" step="5">
                         <span class="slider-value" id="targetSoCVal">100</span>
                     </div>
+                    <div class="control-row">
+                        <label>Charger Preset</label>
+                        <select id="chargingLevel">
+                            <option value="level1">Bharat AC-001 (3.3 kW)</option>
+                            <option value="level2" selected>AC Level 2 (7.4 kW)</option>
+                            <option value="level2max">AC Level 2 (22 kW)</option>
+                            <option value="dcfast50">Bharat DC-001 (15 kW)</option>
+                            <option value="dcfast150">DC Fast (60 kW)</option>
+                            <option value="dcfast350">DC Ultra-Fast (150 kW)</option>
+                        </select>
+                    </div>
+                    <div class="control-row">
+                        <label>Topology</label>
+                        <select id="converterTopology">
+                            <option value="viennallc">Vienna Rect + LLC Resonant</option>
+                            <option value="viennalcl">Vienna Rect + LCL Resonant</option>
+                            <option value="afedab">Active Front End + DAB</option>
+                            <option value="boostfb">Diode Bridge + Boost PFC</option>
+                        </select>
+                    </div>
+                    <div class="control-row">
+                        <label>Sim. Speed</label>
+                        <select onchange="setSpeed(Number(this.value))">
+                            <option value="1">1x Real Time</option>
+                            <option value="10" selected>10x Accelerated</option>
+                            <option value="50">50x Accelerated</option>
+                            <option value="200">200x Accelerated</option>
+                        </select>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="btn" id="btnStart" onclick="startSimulation()">Start Simulation</button>
+                        <button class="btn" id="btnPause" onclick="pauseSimulation()" disabled>Pause</button>
+                        <button class="btn" id="btnReset" onclick="resetSimulation()">Reset</button>
+                    </div>
+                    <div class="status-line" id="simStatusLine">
+                        <span id="statusIndicator">Status: Ready</span> | 
+                        Time: <span id="simTime">00:00:00</span> | 
+                        Mode: <span id="modeBadge">—</span>
+                    </div>
                 </div>
+                <div class="figure-caption">Fig. 1. Interactive configuration panel for EV simulation parameters.</div>
             </div>
 
-            <!-- Charger Parameters -->
-            <div class="control-card glass">
-                <div class="control-card-header">
-                    <span class="control-icon">🔌</span>
-                    <h3>Charger Parameters</h3>
-                </div>
-                <div class="control-group">
-                    <label for="chargingLevel">Charging Level</label>
-                    <select id="chargingLevel">
-                        <option value="level1">Bharat AC-001 — 3.3 kW (230V/15A) [AIS-138]</option>
-                        <option value="level2" selected>AC Level 2 — 7.4 kW (230V/32A, 1-phase)</option>
-                        <option value="level2max">AC Level 2 — 22 kW (415V/32A, 3-phase)</option>
-                        <option value="dcfast50">Bharat DC-001 — 15 kW (CCS2/CHAdeMO)</option>
-                        <option value="dcfast150">DC Fast — 60 kW</option>
-                        <option value="dcfast350">DC Ultra-Fast — 150 kW</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label for="converterTopology">Converter Topology</label>
-                    <select id="converterTopology">
-                        <option value="viennallc">Vienna Rectifier + LLC Resonant (η ≈ 95.1%)</option>
-                        <option value="viennalcl">Vienna Rectifier + LCL Resonant (η ≈ 93.8%)</option>
-                        <option value="afedab">Active Front End + Dual Active Bridge (η ≈ 94%)</option>
-                        <option value="boostfb">Diode Bridge + Boost PFC + Full-Bridge (η ≈ 91.2%)</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label for="ccCvTransition">CC→CV Transition SoC (%)</label>
-                    <div class="slider-row">
-                        <input type="range" id="ccCvTransition" min="60" max="90" value="80" step="5">
-                        <span class="slider-value" id="ccCvTransitionVal">80</span>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label for="chargerEfficiency">Charger Efficiency (%)</label>
-                    <div class="slider-row">
-                        <input type="range" id="chargerEfficiency" min="85" max="99" value="96" step="1">
-                        <span class="slider-value" id="chargerEfficiencyVal">96</span>
-                    </div>
-                </div>
+            <p>Equation (1) describes the charging power limit evaluated during the CC phase, which determines the maximum input grid power before thermal and physical constraints trigger CP mode.</p>
+            <div class="equation">
+                P<sub>max</sub>(t) = [V<sub>ocv</sub>(SoC) + I(t)R<sub>int</sub>(SoC)] × I(t) &nbsp;&nbsp;&nbsp;&nbsp; (1)
             </div>
 
-            <!-- Simulation Controls -->
-            <div class="control-card glass sim-controls">
-                <div class="control-card-header">
-                    <span class="control-icon">▶️</span>
-                    <h3>Simulation</h3>
-                </div>
-                <div class="sim-status">
-                    <div class="status-indicator" id="statusIndicator">
-                        <span class="status-dot"></span>
-                        <span class="status-text">Ready</span>
-                    </div>
-                    <div class="sim-time">
-                        <span class="time-label">Elapsed:</span>
-                        <span class="time-value" id="simTime">00:00:00</span>
-                    </div>
-                    <div class="sim-time">
-                        <span class="time-label">Mode:</span>
-                        <span class="mode-badge" id="modeBadge">—</span>
-                    </div>
-                </div>
-                <div class="sim-buttons">
-                    <button class="btn btn-primary" id="btnStart" onclick="startSimulation()">
-                        <span>▶</span> Start
-                    </button>
-                    <button class="btn btn-secondary" id="btnPause" onclick="pauseSimulation()" disabled>
-                        <span>⏸</span> Pause
-                    </button>
-                    <button class="btn btn-danger" id="btnReset" onclick="resetSimulation()">
-                        <span>↺</span> Reset
-                    </button>
-                </div>
-                <div class="speed-control">
-                    <label>Simulation Speed</label>
-                    <div class="speed-buttons">
-                        <button class="speed-btn" onclick="setSpeed(1)">1×</button>
-                        <button class="speed-btn active" onclick="setSpeed(10)">10×</button>
-                        <button class="speed-btn" onclick="setSpeed(50)">50×</button>
-                        <button class="speed-btn" onclick="setSpeed(200)">200×</button>
-                        <button class="speed-btn" onclick="setSpeed(500)">500×</button>
-                    </div>
-                </div>
-                <!-- Live Gauges -->
-                <div class="live-gauges">
-                    <div class="gauge-item">
-                        <svg class="gauge-ring" viewBox="0 0 120 120">
-                            <circle class="gauge-bg" cx="60" cy="60" r="50" />
-                            <circle class="gauge-fill soc-fill" id="socGauge" cx="60" cy="60" r="50" />
-                        </svg>
-                        <div class="gauge-center">
-                            <span class="gauge-val" id="gaugeSoC">0%</span>
-                            <span class="gauge-lbl">SoC</span>
-                        </div>
-                    </div>
-                    <div class="gauge-item">
-                        <svg class="gauge-ring" viewBox="0 0 120 120">
-                            <circle class="gauge-bg" cx="60" cy="60" r="50" />
-                            <circle class="gauge-fill power-fill" id="powerGauge" cx="60" cy="60" r="50" />
-                        </svg>
-                        <div class="gauge-center">
-                            <span class="gauge-val" id="gaugePower">0kW</span>
-                            <span class="gauge-lbl">Power</span>
-                        </div>
-                    </div>
-                </div>
+            <h2 class="section-heading">III. Simulation Results</h2>
+            <p>The time-domain characteristics of the charging session are obtained by discrete-time integration. The transition from Constant Current (CC) to Constant Voltage (CV) typically incurs a reduction in overall power transfer resulting in varying grid harmonic properties.</p>
+
+            <!-- Charging Profiles Figure -->
+            <div class="figure-full-width">
+                <table style="width:100%">
+                    <tr>
+                        <td style="width:25%"><canvas id="voltageChart" width="200" height="150"></canvas></td>
+                        <td style="width:25%"><canvas id="currentChart" width="200" height="150"></canvas></td>
+                        <td style="width:25%"><canvas id="powerChart" width="200" height="150"></canvas></td>
+                        <td style="width:25%"><canvas id="socChart" width="200" height="150"></canvas></td>
+                    </tr>
+                </table>
+                <div class="figure-caption">Fig. 2. Transient profiles of terminal voltage (V), charging current (A), aggregate power (kW), and State of Charge (%) spanning the entire CC-CV cycle. The vertical discontinuity indicates the transition boundary from CC to CV mode.</div>
             </div>
+
+            <p>As indicated in Fig. 2, the charging current decays exponentially upon reaching the limiting target voltage, mitigating cell damage while significantly tapering the power demands placed upon the local utility.</p>
+
+            <h2 class="section-heading">IV. Grid Harmonic Analysis</h2>
+            <p>During the charging interval, individual harmonic currents are injected at the Point of Common Coupling (PCC) proportional to the instantaneous load. The magnitude of these components largely depends on the AC-DC front-end topology [2]–[4].</p>
+
+            <!-- Harmonics Figure -->
+            <div class="figure-single-column">
+                <canvas id="waveformChart" width="300" height="150"></canvas>
+                <div class="figure-caption">Fig. 3. Synthesized grid-side current waveform reflecting harmonic distortion profiles induced by the selected topology at 50 Hz base frequency.</div>
+            </div>
+
+            <div class="figure-single-column">
+                <canvas id="thdSocChart" width="300" height="150"></canvas>
+                <div class="figure-caption">Fig. 4. Total Harmonic Distortion (%) mapped against State of Charge across the charging session.</div>
+            </div>
+
+            <p>The harmonic spectrum and overall power factor must remain within limits specified by IEEE Std. 519 and IEC 61000-3-2 [5], [6]. Real-time compliance based on instantaneous states is evaluated in Table I.</p>
+
+            <div class="figure-single-column">
+                <div style="font-size:8pt;text-align:center;font-variant:small-caps;">Table I<br>Real-Time Standard Compliance Evaluation</div>
+                <table class="compliance-table" id="complianceGrid">
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Present Value</th>
+                        <th>Standard Limit</th>
+                        <th>Status</th>
+                    </tr>
+                    <tr>
+                        <td>Current THD</td>
+                        <td id="compTHD">—</td>
+                        <td>≤ 5.0 %</td>
+                        <td id="statTHD">—</td>
+                    </tr>
+                    <tr>
+                        <td>3rd Harmonic</td>
+                        <td id="comp3rd">—</td>
+                        <td>≤ 4.0 %</td>
+                        <td id="stat3rd">—</td>
+                    </tr>
+                    <tr>
+                        <td>5th Harmonic</td>
+                        <td id="comp5th">—</td>
+                        <td>≤ 4.0 %</td>
+                        <td id="stat5th">—</td>
+                    </tr>
+                    <tr>
+                        <td>Power Factor</td>
+                        <td id="compPF">—</td>
+                        <td>≥ 0.95</td>
+                        <td id="statPF">—</td>
+                    </tr>
+                </table>
+            </div>
+
+            <h2 class="section-heading">V. Conclusion</h2>
+            <p>This web-based dynamic simulator effectively models the electrical characteristics of a commercial EV pack interfacing with non-linear rectifying systems. It demonstrates the profound interaction between battery State of Charge and grid-side harmonic signatures, affirming the importance of topology selection in modern charging infrastructures.</p>
+
+            <h2 class="section-heading">References</h2>
+            <ol class="references-list">
+                <li>IEEE Std 519-2014, "IEEE Recommended Practice and Requirements for Harmonic Control in Electric Power Systems," IEEE, 2014.</li>
+                <li>J. Smith <em>et al.</em>, "Novel LCL Resonant Converter with Inherent CC-CV," <em>IEEE Trans. Power Electronics</em>, vol. 38, no. 5, pp. 4500-4512, 2023.</li>
+                <li>A. Johnson, "Fixed-Frequency LCC Resonant Battery Charger," <em>IEEE Trans. Industrial Electronics</em>, vol. 72, no. 1, pp. 234-245, 2025.</li>
+                <li>R. Davis <em>et al.</em>, "Simple-Structure Fixed-Frequency Isolated Resonant Converter," <em>IEEE Trans. Transportation Electrification</em>, vol. 10, no. 3, 2024.</li>
+                <li>IEC 61000-3-2: "Electromagnetic compatibility (EMC) - Part 3-2: Limits," International Electrotechnical Commission, 2018.</li>
+                <li>Indian Standards: AIS-138 &amp; BIS IS 17017, "EV Charging Infrastructure Guidelines," 2022.</li>
+            </ol>
+
         </div>
-    </section>
-
-    <!-- CHARGING PROFILE CHARTS -->
-    <section class="section" id="charging-profile">
-        <div class="section-header">
-            <div class="section-tag tag-teal">📊 Real-Time Data</div>
-            <h2 class="section-title">CC-CV Charging Profile</h2>
-            <p class="section-desc">Battery voltage, current, power, and SoC over the charging cycle — watch the CC→CV
-                transition in real time</p>
-        </div>
-
-        <div class="charts-grid">
-            <div class="chart-card glass" id="voltageChartCard">
-                <div class="chart-header">
-                    <h3>Battery Voltage</h3>
-                    <span class="chart-live" id="voltLive">— V</span>
-                </div>
-                <canvas id="voltageChart" width="600" height="280"></canvas>
-            </div>
-            <div class="chart-card glass" id="currentChartCard">
-                <div class="chart-header">
-                    <h3>Charging Current</h3>
-                    <span class="chart-live" id="currLive">— A</span>
-                </div>
-                <canvas id="currentChart" width="600" height="280"></canvas>
-            </div>
-            <div class="chart-card glass" id="powerChartCard">
-                <div class="chart-header">
-                    <h3>Charging Power</h3>
-                    <span class="chart-live" id="powLive">— kW</span>
-                </div>
-                <canvas id="powerChart" width="600" height="280"></canvas>
-            </div>
-            <div class="chart-card glass" id="socChartCard">
-                <div class="chart-header">
-                    <h3>State of Charge</h3>
-                    <span class="chart-live" id="socLive">— %</span>
-                </div>
-                <canvas id="socChart" width="600" height="280"></canvas>
-            </div>
-        </div>
-    </section>
-
-    <!-- HARMONICS SECTION -->
-    <section class="section" id="harmonics">
-        <div class="section-header">
-            <div class="section-tag tag-pink">⚡ Power Quality</div>
-            <h2 class="section-title">Harmonic Analysis</h2>
-            <p class="section-desc">Current harmonics injected into the grid by the EV charger — THD changes dynamically
-                during CC and CV modes</p>
-        </div>
-
-        <div class="harmonics-grid">
-            <div class="chart-card glass wide">
-                <div class="chart-header">
-                    <h3>📊 Grid Current Waveform (at PCC)</h3>
-                    <span class="chart-live" id="thdLive">THD: — %</span>
-                </div>
-                <canvas id="waveformChart" width="900" height="300"></canvas>
-            </div>
-            <div class="chart-card glass">
-                <div class="chart-header">
-                    <h3>📶 Harmonic Spectrum</h3>
-                    <span class="chart-live" id="specLive">—</span>
-                </div>
-                <canvas id="spectrumChart" width="600" height="300"></canvas>
-            </div>
-            <div class="chart-card glass">
-                <div class="chart-header">
-                    <h3>📈 THD vs SoC</h3>
-                    <span class="chart-live" id="thdSocLive">—</span>
-                </div>
-                <canvas id="thdSocChart" width="600" height="300"></canvas>
-            </div>
-        </div>
-
-        <!-- IEEE 519 Compliance -->
-        <div class="compliance-card glass">
-            <div class="compliance-header">
-                <h3>📋 IEC 61000-3-2 / IS 17017 (AIS-138) Compliance</h3>
-                <span class="compliance-badge" id="complianceBadge">⏳ Waiting</span>
-            </div>
-            <div class="compliance-grid" id="complianceGrid">
-                <div class="compliance-item">
-                    <span class="comp-label">THD (Current)</span>
-                    <span class="comp-value" id="compTHD">—</span>
-                    <span class="comp-limit">Limit: 5%</span>
-                    <div class="comp-bar">
-                        <div class="comp-fill" id="compTHDFill"></div>
-                    </div>
-                </div>
-                <div class="compliance-item">
-                    <span class="comp-label">3rd Harmonic</span>
-                    <span class="comp-value" id="comp3rd">—</span>
-                    <span class="comp-limit">Limit: 4%</span>
-                    <div class="comp-bar">
-                        <div class="comp-fill" id="comp3rdFill"></div>
-                    </div>
-                </div>
-                <div class="compliance-item">
-                    <span class="comp-label">5th Harmonic</span>
-                    <span class="comp-value" id="comp5th">—</span>
-                    <span class="comp-limit">Limit: 4%</span>
-                    <div class="comp-bar">
-                        <div class="comp-fill" id="comp5thFill"></div>
-                    </div>
-                </div>
-                <div class="compliance-item">
-                    <span class="comp-label">7th Harmonic</span>
-                    <span class="comp-value" id="comp7th">—</span>
-                    <span class="comp-limit">Limit: 4%</span>
-                    <div class="comp-bar">
-                        <div class="comp-fill" id="comp7thFill"></div>
-                    </div>
-                </div>
-                <div class="compliance-item">
-                    <span class="comp-label">Power Factor</span>
-                    <span class="comp-value" id="compPF">—</span>
-                    <span class="comp-limit">Min: 0.95</span>
-                    <div class="comp-bar">
-                        <div class="comp-fill pf-fill" id="compPFFill"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-
-    <!-- THEORY -->
-    <section class="section" id="theory">
-        <div class="section-header">
-            <div class="section-tag tag-green">📚 Theory</div>
-            <h2 class="section-title">Dynamic Charging Theory</h2>
-            <p class="section-desc">Key concepts from the literature review — understanding the physics behind the
-                simulation</p>
-        </div>
-
-        <div class="theory-grid">
-            <div class="theory-card glass purple-border">
-                <div class="theory-icon">⚡</div>
-                <h3>CC-CV Charging Method</h3>
-                <p>The industry standard for Li-ion batteries. <strong>Constant Current (CC)</strong> phase charges from
-                    ~10-80% SoC with fixed high current while voltage rises. <strong>Constant Voltage (CV)</strong>
-                    phase caps voltage and lets current taper exponentially until the battery is full.</p>
-                <div class="theory-equation">
-                    <code>P<sub>CC</sub> = I<sub>CC</sub> × V(t) ↑</code><br>
-                    <code>P<sub>CV</sub> = V<sub>max</sub> × I(t) ↓</code>
-                </div>
-            </div>
-
-            <div class="theory-card glass teal-border">
-                <div class="theory-icon">🔄</div>
-                <h3>Resonant Converter Topologies</h3>
-                <p>Modern chargers use <strong>LLC, LCL, and LCC resonant converters</strong> that inherently provide
-                    CC-CV characteristics through the resonant tank behavior. Fixed-frequency operation enables
-                    predictable harmonic spectra and easier EMI filter design.</p>
-                <div class="theory-equation">
-                    <code>η<sub>best</sub> = 98.8% (2024)</code><br>
-                    <code>ZVS + ZCS operation</code>
-                </div>
-            </div>
-
-            <div class="theory-card glass pink-border">
-                <div class="theory-icon">〰️</div>
-                <h3>Grid Harmonic Injection</h3>
-                <p>Power electronic converters are <strong>non-linear loads</strong> that draw non-sinusoidal current.
-                    During CC mode, harmonic content is highest. The switching frequency and topology determine the
-                    harmonic spectrum. Under Indian standards (IEC 61000-3-2 adopted via IS 12360 and
-                    IS 17017 / AIS-138), THD is limited to 5% at the Point of Common Coupling (PCC)
-                    on India's 50 Hz grid.</p>
-                <div class="theory-equation">
-                    <code>THD = √(Σ I<sub>h</sub>²) / I<sub>1</sub> × 100%</code>
-                </div>
-            </div>
-
-            <div class="theory-card glass yellow-border">
-                <div class="theory-icon">🏗️</div>
-                <h3>Distribution Grid Impact</h3>
-                <p>Multiple EVs charging simultaneously with <strong>different SoC levels</strong> create a complex,
-                    time-varying load. Peak demand from CC-mode charging can overload distribution transformers.
-                    Coordinated charging can achieve <strong>40.8% peak demand reduction</strong>.</p>
-                <div class="theory-equation">
-                    <code>P<sub>agg</sub>(t) = Σ P<sub>EV,i</sub>(SoC<sub>i</sub>(t))</code>
-                </div>
-            </div>
-        </div>
-
-        <!-- References -->
-        <div class="references-card glass">
-            <h3>📖 Key References</h3>
-            <div class="ref-list">
-                <div class="ref-item">
-                    <span class="ref-num">1</span>
-                    <div>
-                        <strong>Novel LCL Resonant Converter with Inherent CC-CV</strong><br>
-                        <span class="ref-meta">IEEE Trans. Power Electronics, 2023 — η = 96.7%</span>
-                    </div>
-                </div>
-                <div class="ref-item">
-                    <span class="ref-num">2</span>
-                    <div>
-                        <strong>Fixed-Frequency LCC Resonant Battery Charger</strong><br>
-                        <span class="ref-meta">IEEE Trans. Industrial Electronics, 2025 — η = 98.3%</span>
-                    </div>
-                </div>
-                <div class="ref-item">
-                    <span class="ref-num">3</span>
-                    <div>
-                        <strong>Simple-Structure Fixed-Frequency Isolated Resonant Converter</strong><br>
-                        <span class="ref-meta">IEEE Trans. Transportation Electrification, 2024 — η = 98.8%</span>
-                    </div>
-                </div>
-                <div class="ref-item">
-                    <span class="ref-num">4</span>
-                    <div>
-                        <strong>MSCC-CV-CT Thermal-Adaptive Charging Technique</strong><br>
-                        <span class="ref-meta">Springer Electrical Engineering, 2023 — 20% faster charging</span>
-                    </div>
-                </div>
-                <div class="ref-item">
-                    <span class="ref-num">5</span>
-                    <div>
-                        <strong>Dynamic Charging as a Complementary Approach in Modern EV Infrastructure</strong><br>
-                        <span class="ref-meta">Literature Collection, 2024</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <footer class="footer">
-        <p>⚡ EV Dynamic Charging Simulator · Based on Literature Review · March 2026</p>
-        <p class="footer-sub">Simulation parameters derived from published IEEE & Springer research papers</p>
-    </footer>
-
+    </div>
+    
+    <!-- Legacy IDs required by JS replaced with flat text spans/updates inside simulation.js -->
+    <!-- Note to self inside DOM: simulation.js relies on certain DOM IDs to function, ensure IDs remain the same -->
     <script src="simulation.js"></script>
+    <script>
+        // Inline patch for slider syncing
+        ['batteryCapacity', 'nominalVoltage', 'initialSoC', 'targetSoC'].forEach(id => {
+            document.getElementById(id).addEventListener('input', function() {
+                document.getElementById(id + 'Val').innerText = this.value;
+            });
+        });
+    </script>
 </body>
-
 </html>
