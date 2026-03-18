@@ -81,6 +81,8 @@ TOPOLOGY_PROFILES = {
 }
 
 
+
+
 # ============================================================
 #  BATTERY MODEL
 # ============================================================
@@ -95,7 +97,7 @@ def battery_ocv(soc, nominal_v, v_min_ratio=0.82, v_max_ratio=1.05):
     Rescales [0.82, 1.05] reference to actual v_min/v_max if they differ from defaults."""
     v_ref = np.interp(soc, _OCV_SOC_PTS, _OCV_NORM_PTS)   # Get normalized OCV from reference curve
     default_span = _OCV_NORM_PTS[-1] - _OCV_NORM_PTS[0]  # 0.230  — default voltage span of reference curve
-    v_ratio = v_min_ratio + (v_ref - _OCV_NORM_PTS[0]) / default_span * (v_max_ratio - v_min_ratio)
+    v_ratio = v_min_ratio + (v_ref - _OCV_NORM_PTS[0]) / default_span * (v_max_ratio - v_min_ratio)  # Rescale to actual v_min/v_max range
     return np.minimum(nominal_v * v_ratio, nominal_v * v_max_ratio)
 
 def internal_resistance(soc, nominal_v):
@@ -236,334 +238,6 @@ def simulate_charging(bat=None, chg=None, dt=1.0):
     }
 
 
-# ============================================================
-#  HARMONIC ANALYSIS
-# ============================================================
-
-def compute_thd_profile(soc_arr, mode_arr, topology_name, cc_cv_transition=80):
-    """Compute THD at each SoC point based on converter topology.
-    Active PFC topologies (Vienna, AFE) maintain stable THD at light load (cv_thd_stable=True);
-    passive front-end (Diode Bridge) sees rising THD as fundamental current tapers."""
-    profile = TOPOLOGY_PROFILES[topology_name]
-    cv_thd_stable = profile.get('cv_thd_stable', False)
-    thd_arr = []
-    for s, m in zip(soc_arr, mode_arr):
-        if m in ('CC', 'CP'):
-            thd_arr.append(profile['thd_cc'])
-        else:
-            if cv_thd_stable:
-                # Active PFC control loop holds THD at its CV-mode value regardless of load
-                thd_arr.append(profile['thd_cv'])
-            else:
-                # Passive front end: THD rises as fundamental current tapers in CV tail
-                progress = min((s - cc_cv_transition) / (100 - cc_cv_transition), 1.0)
-                thd_arr.append(profile['thd_cv'] * (1 + 1.5 * progress))
-    return np.array(thd_arr)
-
-def harmonic_spectrum(topology_name, mode='CC'):
-    """Get harmonic magnitudes for a given topology and mode"""
-    profile = TOPOLOGY_PROFILES[topology_name]
-    scale = 1.0 if mode in ('CC', 'CP') else 0.6
-    orders = sorted(profile['harmonics'].keys())
-    magnitudes = [profile['harmonics'][h] * scale for h in orders]
-    return orders, magnitudes
-
-def power_factor_from_thd(thd):
-    """PF ≈ DPF / sqrt(1 + (THD/100)^2)"""
-    dpf = 0.99
-    return dpf / np.sqrt(1 + (thd/100)**2)
-
-def generate_waveform(topology_name, mode='CC', cycles=3, points=1000):
-    """Generate distorted grid current waveform at Indian grid frequency (50 Hz)"""
-    profile = TOPOLOGY_PROFILES[topology_name]
-    scale = 1.0 if mode in ('CC', 'CP') else 0.6
-    # Time axis: one period = 1/GRID_FREQ_HZ seconds
-    t = np.linspace(0, cycles * 2 * np.pi, points)  # angular frequency (ωt)
-    y_pure = np.sin(t)
-    y_distorted = np.sin(t)
-    for order, mag in profile['harmonics'].items():
-        y_distorted += (mag * scale / 100) * np.sin(order * t + order * 0.3)
-    return t, y_pure, y_distorted
-
-
-
-# ============================================================
-#  PLOTTING — DARK THEME
-# ============================================================
-
-DARK_BG = '#0a0a14'
-CARD_BG = '#13132a'
-GRID_COLOR = '#252548'
-TEXT_COLOR = '#e0e0f0'
-TEXT2_COLOR = '#8888aa'
-PURPLE = '#7c6cf0'
-TEAL = '#00d4c8'
-PINK = '#ff6b9d'
-YELLOW = '#ffc857'
-GREEN = '#4ae0a0'
-RED = '#ff5252'
-BLUE = '#6b9dff'
-
-def setup_dark_style():
-    plt.rcParams.update({
-        'figure.facecolor': DARK_BG,
-        'axes.facecolor': CARD_BG,
-        'axes.edgecolor': GRID_COLOR,
-        'axes.labelcolor': TEXT2_COLOR,
-        'axes.grid': True,
-        'grid.color': GRID_COLOR,
-        'grid.alpha': 0.5,
-        'text.color': TEXT_COLOR,
-        'xtick.color': TEXT2_COLOR,
-        'ytick.color': TEXT2_COLOR,
-        'font.family': 'sans-serif',
-        'font.size': 10,
-        'legend.facecolor': CARD_BG,
-        'legend.edgecolor': GRID_COLOR,
-        'legend.fontsize': 9,
-    })
-
-
-def plot_charging_profile(data, topology_name, save_path=None):
-    """Plot 1: CC-CV Charging Profile — 4 subplots"""
-    setup_dark_style()
-    fig, axes = plt.subplots(2, 2, figsize=(16, 10))
-    fig.suptitle('CC-CV Dynamic Charging Profile', fontsize=18, fontweight='bold',
-                 color=TEXT_COLOR, y=0.98)
-
-    # Find CC/CP → CV transition index
-    trans_idx = None
-    for i, m in enumerate(data['mode']):
-        if i > 0 and data['mode'][i-1] in ('CC', 'CP') and m == 'CV':
-            trans_idx = i
-            break
-
-    configs = [
-        (axes[0,0], data['voltage'], 'Battery Voltage (V)', PINK, 'V'),
-        (axes[0,1], data['current'], 'Charging Current (A)', BLUE, 'A'),
-        (axes[1,0], data['power_kw'], 'Charging Power (kW)', GREEN, 'kW'),
-        (axes[1,1], data['soc'], 'State of Charge (%)', YELLOW, '%'),
-    ]
-
-    for ax, y, title, color, unit in configs:
-        ax.fill_between(data['time_min'], y, alpha=0.15, color=color)
-        ax.plot(data['time_min'], y, color=color, linewidth=2.5, zorder=5)
-        ax.set_title(title, fontsize=12, fontweight='bold', color=TEXT_COLOR, pad=10)
-        ax.set_xlabel('Time (min)', fontsize=9)
-        ax.set_ylabel(f'{title.split("(")[0].strip()}', fontsize=9)
-
-        # Transition line
-        if trans_idx is not None:
-            t_trans = data['time_min'][trans_idx]
-            ax.axvline(t_trans, color=YELLOW, linestyle='--', alpha=0.6, linewidth=1)
-            ypos = ax.get_ylim()[1] * 0.95
-            ax.text(t_trans + 0.5, ypos, f"{data['mode'][trans_idx-1]}→CV", fontsize=8, color=YELLOW, alpha=0.8,
-                    va='top', fontweight='bold')
-
-        # Endpoint annotation
-        ax.annotate(f'{y[-1]:.1f} {unit}',
-                    xy=(data['time_min'][-1], y[-1]),
-                    fontsize=9, fontweight='bold', color=color,
-                    bbox=dict(boxstyle='round,pad=0.3', facecolor=CARD_BG, edgecolor=color, alpha=0.9))
-
-    # Add topology info text
-    fig.text(0.5, 0.01, f'Topology: {topology_name}  |  Battery: {BatteryConfig.capacity_kwh}kWh @ {BatteryConfig.nominal_voltage}V  |  '
-             f'SoC: {BatteryConfig.initial_soc}% → {data["soc"][-1]:.0f}%  |  Total time: {data["time_min"][-1]:.0f} min',
-             ha='center', fontsize=9, color=TEXT2_COLOR,
-             bbox=dict(boxstyle='round,pad=0.5', facecolor=CARD_BG, edgecolor=GRID_COLOR))
-
-    plt.tight_layout(rect=[0, 0.04, 1, 0.95])
-    if save_path:
-        fig.savefig(save_path, dpi=150, bbox_inches='tight', facecolor=DARK_BG)
-        print(f"✅ Saved: {save_path}")
-    plt.show()
-
-
-def plot_harmonics(data, topology_name, save_path=None):
-    """Plot 2: Harmonic Analysis — waveform, spectrum, THD vs SoC, compliance"""
-    setup_dark_style()
-    fig = plt.figure(figsize=(16, 12))
-    gs = gridspec.GridSpec(3, 2, figure=fig, hspace=0.4, wspace=0.3)
-    fig.suptitle(f'Harmonic Analysis & IEC 61000-3-2 / IS 17017 Compliance ({GRID_FREQ_HZ} Hz Grid)', fontsize=18,
-                 fontweight='bold', color=TEXT_COLOR, y=0.98)
-
-    # 1. Grid current waveform — CC/CP mode
-    ax1 = fig.add_subplot(gs[0, :])
-    t_w, y_pure, y_dist = generate_waveform(topology_name, 'CC')
-    ax1.plot(t_w / (2*np.pi), y_pure, color=GRID_COLOR, linewidth=1, alpha=0.5, label='Pure sine')
-    ax1.fill_between(t_w / (2*np.pi), y_dist, alpha=0.1, color=PURPLE)
-    ax1.plot(t_w / (2*np.pi), y_dist, color=PURPLE, linewidth=2, label='Distorted (CC/CP mode)')
-    # Also plot CV mode
-    _, _, y_dist_cv = generate_waveform(topology_name, 'CV')
-    ax1.plot(t_w / (2*np.pi), y_dist_cv, color=TEAL, linewidth=1.5, alpha=0.7, linestyle='--', label='Distorted (CV mode)')
-    ax1.set_title('Grid Current Waveform at PCC', fontsize=12, fontweight='bold', pad=10)
-    ax1.set_xlabel('Cycles (50 Hz)')
-    ax1.set_ylabel('Current (p.u.)')
-    ax1.legend(loc='upper right')
-    ax1.axhline(0, color=GRID_COLOR, linewidth=0.5)
-
-    # 2. Harmonic spectrum — CC/CP mode
-    ax2 = fig.add_subplot(gs[1, 0])
-    orders_cc, mags_cc = harmonic_spectrum(topology_name, 'CC')
-    orders_cv, mags_cv = harmonic_spectrum(topology_name, 'CV')
-    x = np.arange(len(orders_cc))
-    w = 0.35
-    bars1 = ax2.bar(x - w/2, mags_cc, w, color=PURPLE, alpha=0.85, label='CC/CP Mode', zorder=5)
-    bars2 = ax2.bar(x + w/2, mags_cv, w, color=TEAL, alpha=0.85, label='CV Mode', zorder=5)
-    ax2.axhline(4.0, color=RED, linestyle='--', linewidth=1.5, alpha=0.7, label='IEC 61000-3-2 Limit (4%)')
-    ax2.set_xticks(x)
-    ax2.set_xticklabels([f'{o}th' for o in orders_cc])
-    ax2.set_title('Individual Harmonic Magnitudes', fontsize=12, fontweight='bold', pad=10)
-    ax2.set_ylabel('Magnitude (% of fundamental)')
-    ax2.set_xlabel('Harmonic Order')
-    ax2.legend(loc='upper right', fontsize=8)
-    # Value labels on bars
-    for bar in bars1:
-        h = bar.get_height()
-        if h > 0.5:
-            ax2.text(bar.get_x() + bar.get_width()/2, h + 0.15, f'{h:.1f}',
-                     ha='center', fontsize=7, color=TEXT2_COLOR)
-
-    # 3. THD vs SoC
-    ax3 = fig.add_subplot(gs[1, 1])
-    thd_profile = compute_thd_profile(data['soc'], data['mode'], topology_name)
-    ax3.fill_between(data['soc'], thd_profile, alpha=0.15, color=PINK)
-    ax3.plot(data['soc'], thd_profile, color=PINK, linewidth=2.5)
-    ax3.axhline(5.0, color=RED, linestyle='--', linewidth=1.5, alpha=0.7, label='IEC 61000-3-2 THD Limit (5%)')
-    if trans_idx := next((i for i, m in enumerate(data['mode']) if m == 'CV'), None):
-        ax3.axvline(data['soc'][trans_idx], color=YELLOW, linestyle='--', alpha=0.5)
-        ax3.text(data['soc'][trans_idx] + 1, max(thd_profile) * 0.9, f"{data['mode'][trans_idx-1]}→CV", fontsize=8, color=YELLOW)
-    ax3.set_title('THD vs State of Charge', fontsize=12, fontweight='bold', pad=10)
-    ax3.set_xlabel('SoC (%)')
-    ax3.set_ylabel('THD (%)')
-    ax3.legend(loc='upper right', fontsize=8)
-
-    # 4. Harmonic compliance — % thresholds follow IEEE 519 / IS 16528 (feeder/PCC scope).
-    #    Note: IEC 61000-3-2 defines absolute amp limits per harmonic for equipment Class A/C
-    #    (different scope from feeder-level analysis). Both are cited here but % limits are IEEE 519.
-    ax4 = fig.add_subplot(gs[2, 0])
-    ax4.axis('off')
-    profile = TOPOLOGY_PROFILES[topology_name]
-    thd_cc = profile['thd_cc']
-    thd_cv = profile['thd_cv']
-    pf_cc = power_factor_from_thd(thd_cc)
-    pf_cv = power_factor_from_thd(thd_cv)
-    h3 = profile['harmonics'][3]
-    h5 = profile['harmonics'][5]
-    h7 = profile['harmonics'][7]
-
-    compliance_data = [
-        ('THD (CC/CP Mode)', f'{thd_cc:.1f}%', '≤ 5.0%', thd_cc <= 5.0),
-        ('THD (CV Mode)', f'{thd_cv:.1f}%', '≤ 5.0%', thd_cv <= 5.0),
-        ('3rd Harmonic', f'{h3:.1f}%', '≤ 4.0%', h3 <= 4.0),
-        ('5th Harmonic', f'{h5:.1f}%', '≤ 4.0%', h5 <= 4.0),
-        ('7th Harmonic', f'{h7:.1f}%', '≤ 4.0%', h7 <= 4.0),
-        ('Power Factor (CC/CP)', f'{pf_cc:.4f}', '≥ 0.95', pf_cc >= 0.95),
-        ('Power Factor (CV)', f'{pf_cv:.4f}', '≥ 0.95', pf_cv >= 0.95),
-    ]
-    all_pass = all(c[3] for c in compliance_data)
-
-    ax4.set_xlim(0, 10)
-    ax4.set_ylim(0, len(compliance_data) + 2)
-    # Title box
-    status_color = GREEN if all_pass else RED
-    status_text = '✅ IEEE 519 / IS 16528 COMPLIANT' if all_pass else '❌ NON-COMPLIANT'
-    ax4.text(5, len(compliance_data) + 1.2, status_text, ha='center', fontsize=14,
-             fontweight='bold', color=status_color,
-             bbox=dict(boxstyle='round,pad=0.5', facecolor=CARD_BG, edgecolor=status_color))
-    # Header
-    for j, header in enumerate(['Parameter', 'Value', 'Limit', 'Status']):
-        ax4.text([0.5, 3.5, 5.8, 8.5][j], len(compliance_data) + 0.3, header,
-                 fontsize=9, fontweight='bold', color=TEXT2_COLOR)
-    # Rows
-    for i, (param, val, limit, ok) in enumerate(compliance_data):
-        y = len(compliance_data) - i - 0.5
-        color = GREEN if ok else RED
-        ax4.text(0.5, y, param, fontsize=9, color=TEXT_COLOR)
-        ax4.text(3.5, y, val, fontsize=9, fontweight='bold', color=color, family='monospace')
-        ax4.text(5.8, y, limit, fontsize=9, color=TEXT2_COLOR)
-        ax4.text(8.5, y, '✅ Pass' if ok else '❌ Fail', fontsize=9, color=color, fontweight='bold')
-
-    # 5. Power factor over charging cycle
-    ax5 = fig.add_subplot(gs[2, 1])
-    pf_arr = power_factor_from_thd(thd_profile)
-    ax5.fill_between(data['soc'], pf_arr, alpha=0.15, color=GREEN)
-    ax5.plot(data['soc'], pf_arr, color=GREEN, linewidth=2.5)
-    ax5.axhline(0.95, color=RED, linestyle='--', alpha=0.7, label='Min PF = 0.95')
-    ax5.set_title('Power Factor vs SoC', fontsize=12, fontweight='bold', pad=10)
-    ax5.set_xlabel('SoC (%)')
-    ax5.set_ylabel('Power Factor')
-    ax5.set_ylim(0.92, 1.0)
-    ax5.legend(loc='lower right', fontsize=8)
-
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
-    if save_path:
-        fig.savefig(save_path, dpi=150, bbox_inches='tight', facecolor=DARK_BG)
-        print(f"✅ Saved: {save_path}")
-    plt.show()
-
-
-
-def plot_topology_comparison(save_path=None):
-    """Plot 4: Compare all converter topologies"""
-    setup_dark_style()
-    fig, axes = plt.subplots(1, 3, figsize=(16, 5))
-    fig.suptitle('Converter Topology Comparison (from Literature)', fontsize=16,
-                 fontweight='bold', color=TEXT_COLOR, y=1.02)
-
-    names = list(TOPOLOGY_PROFILES.keys())
-    short_names = ['Vienna+LLC', 'Vienna+LCL', 'AFE+DAB', 'Boost+FB']
-    colors = [PURPLE, TEAL, GREEN, PINK]
-
-    # 1. THD comparison
-    ax1 = axes[0]
-    thd_cc = [TOPOLOGY_PROFILES[n]['thd_cc'] for n in names]
-    thd_cv = [TOPOLOGY_PROFILES[n]['thd_cv'] for n in names]
-    x = np.arange(len(names))
-    w = 0.35
-    ax1.bar(x - w/2, thd_cc, w, color=colors, alpha=0.85, label='CC/CP Mode')
-    ax1.bar(x + w/2, thd_cv, w, color=colors, alpha=0.45, label='CV Mode')
-    ax1.axhline(5.0, color=RED, linestyle='--', alpha=0.7, linewidth=1.5, label='IEC 61000-3-2 Limit (5%)')
-    ax1.set_xticks(x)
-    ax1.set_xticklabels(short_names, fontsize=9)
-    ax1.set_title('THD by Topology', fontweight='bold', pad=10)
-    ax1.set_ylabel('THD (%)')
-    ax1.legend(fontsize=7)
-    for i, v in enumerate(thd_cc):
-        ax1.text(i - w/2, v + 0.15, f'{v:.1f}%', ha='center', fontsize=7, color=TEXT2_COLOR)
-
-    # 2. Efficiency comparison
-    ax2 = axes[1]
-    etas = [TOPOLOGY_PROFILES[n]['eta'] * 100 for n in names]
-    bars = ax2.bar(short_names, etas, color=colors, alpha=0.85)
-    ax2.set_ylim(93, 100)
-    ax2.set_title('Charger Efficiency', fontweight='bold', pad=10)
-    ax2.set_ylabel('Efficiency (%)')
-    for bar, v in zip(bars, etas):
-        ax2.text(bar.get_x() + bar.get_width()/2, v + 0.1, f'{v:.1f}%',
-                 ha='center', fontsize=9, fontweight='bold', color=TEXT_COLOR)
-
-    # 3. Power factor comparison
-    ax3 = axes[2]
-    pf_cc = [power_factor_from_thd(TOPOLOGY_PROFILES[n]['thd_cc']) for n in names]
-    pf_cv = [power_factor_from_thd(TOPOLOGY_PROFILES[n]['thd_cv']) for n in names]
-    ax3.bar(x - w/2, pf_cc, w, color=colors, alpha=0.85, label='CC/CP Mode')
-    ax3.bar(x + w/2, pf_cv, w, color=colors, alpha=0.45, label='CV Mode')
-    ax3.axhline(0.95, color=RED, linestyle='--', alpha=0.7, label='Min PF = 0.95')
-    ax3.set_xticks(x)
-    ax3.set_xticklabels(short_names, fontsize=9)
-    ax3.set_ylim(0.93, 1.0)
-    ax3.set_title('Power Factor', fontweight='bold', pad=10)
-    ax3.set_ylabel('Power Factor')
-    ax3.legend(fontsize=7)
-
-    plt.tight_layout()
-    if save_path:
-        fig.savefig(save_path, dpi=150, bbox_inches='tight', facecolor=DARK_BG)
-        print(f"✅ Saved: {save_path}")
-    plt.show()
-
-
 def preset_output_dir(base_output_dir, preset_name):
     """Return a filesystem-safe output directory for a charger preset."""
     safe_name = preset_name.replace(os.sep, '_')
@@ -574,6 +248,15 @@ def preset_output_dir(base_output_dir, preset_name):
 
 def run_simulation_for_preset(preset_name, topology, base_output_dir):
     """Run the full simulation workflow for one charger preset."""
+    # Local import to avoid circular dependency at module load time.
+    # harmonic_characterization imports TOPOLOGY_PROFILES, BatteryConfig, and GRID_FREQ_HZ
+    # from this module; those are defined above, so this import is safe here.
+    from harmonic_characterization import (
+        plot_charging_profile,
+        plot_harmonics,
+        plot_topology_comparison,
+        power_factor_from_thd,
+    )
     preset_dir = preset_output_dir(base_output_dir, preset_name)
     os.makedirs(preset_dir, exist_ok=True)
 
@@ -609,7 +292,7 @@ def run_simulation_for_preset(preset_name, topology, base_output_dir):
     print(f"   Power Factor (CC): {power_factor_from_thd(profile['thd_cc']):.4f}")
     print(f"   Power Factor (CV): {power_factor_from_thd(profile['thd_cv']):.4f}")
     compliant = profile['thd_cc'] <= 5.0 and all(v <= 4.0 for v in profile['harmonics'].values())
-    print(f"   IEC 61000-3-2 / IS 17017 Compliance: {'✅ PASS' if compliant else '❌ FAIL'}")
+    print(f"   IEEE 519 / IS 16528 Compliance: {'✅ PASS' if compliant else '❌ FAIL'}")
     plot_harmonics(data, topology, os.path.join(preset_dir, 'fig2_harmonics.png'))
 
     # --- 3. Topology Comparison ---
