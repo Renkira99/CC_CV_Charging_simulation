@@ -424,3 +424,10 @@ One subdirectory per charger preset, each containing three figures. Figure 3 (to
 ## Interactive Web Simulator
 
 The `Simulator/` directory contains an interactive, dependency-free HTML/JS version of the charging physics and harmonic analysis models. Simply open `EV_Charging_Simulaion.html` in any modern web browser to interact with the models, adjust battery/charger parameters, and monitor real-time charging curves and spectrum compliance visually.
+
+---
+
+## Planned Extensions
+
+1. **PCC harmonic current calculation at 440V grid connection using measured IEEE paper data** — file `pcc_harmonic_analysis.py` in development.
+2. **OpenDSS feeder integration via `opendssdirect` Python library** — the `power_kw` time series from `simulate_charging()` will be passed directly as a `LoadShape` object to the feeder model without leaving Python for distribution network impact analysis.
