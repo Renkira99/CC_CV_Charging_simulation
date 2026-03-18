@@ -687,54 +687,28 @@ function drawChart(canvasId, data, options) {
     }
   }
 
-  // Area fill gradient
-  const gradient = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
-  const color = options.color || '#7c6cf0';
-  gradient.addColorStop(0, color + '30');
-  gradient.addColorStop(1, color + '00');
-
+  // Line only, no heavy gradients
   ctx.beginPath();
   const xData = options.xData || data.map((_, i) => i);
   ctx.moveTo(mapX(xData[0]), mapY(data[0]));
   for (let i = 1; i < data.length; i++) {
     ctx.lineTo(mapX(xData[i]), mapY(data[i]));
   }
-  ctx.lineTo(mapX(xData[data.length - 1]), pad.top + plotH);
-  ctx.lineTo(mapX(xData[0]), pad.top + plotH);
-  ctx.closePath();
-  ctx.fillStyle = gradient;
-  ctx.fill();
+  const color = options.color || '#0d6efd';
 
-  // Line
-  ctx.beginPath();
-  ctx.moveTo(mapX(xData[0]), mapY(data[0]));
-  for (let i = 1; i < data.length; i++) {
-    ctx.lineTo(mapX(xData[i]), mapY(data[i]));
-  }
   ctx.strokeStyle = color;
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 1.5;
   ctx.lineJoin = 'round';
   ctx.stroke();
-
-  // Glow effect
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 10;
-  ctx.stroke();
-  ctx.shadowBlur = 0;
 
   // Current value dot
   if (data.length > 0) {
     const lastX = mapX(xData[xData.length - 1]);
     const lastY = mapY(data[data.length - 1]);
     ctx.beginPath();
-    ctx.arc(lastX, lastY, 5, 0, Math.PI * 2);
+    ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
-    ctx.beginPath();
-    ctx.arc(lastX, lastY, 8, 0, Math.PI * 2);
-    ctx.strokeStyle = color + '60';
-    ctx.lineWidth = 2;
-    ctx.stroke();
   }
 }
 
@@ -812,12 +786,8 @@ function drawBarChart(canvasId, labels, values, options) {
     const barH = (val / yMax) * plotH;
     const y = pad.top + plotH - barH;
 
-    // Gradient bar
-    const grad = ctx.createLinearGradient(x, y, x, pad.top + plotH);
     const c = colors[i % colors.length];
-    grad.addColorStop(0, c);
-    grad.addColorStop(1, c + '40');
-    ctx.fillStyle = grad;
+    ctx.fillStyle = c;
 
     // Rounded rect
     const r = 4;
@@ -832,11 +802,7 @@ function drawBarChart(canvasId, labels, values, options) {
     ctx.closePath();
     ctx.fill();
 
-    // Glow
-    ctx.shadowColor = c;
-    ctx.shadowBlur = 8;
-    ctx.fill();
-    ctx.shadowBlur = 0;
+
 
     // Value on top
     ctx.fillStyle = '#e8e8f4';
@@ -927,21 +893,11 @@ function drawWaveform(canvasId) {
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   }
 
-  // Area fill
-  const gradient = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
-  const waveColor = (state.mode === 'CC' || state.mode === 'CP') ? '#7c6cf0' : '#00d4c8';
-  gradient.addColorStop(0, waveColor + '15');
-  gradient.addColorStop(0.5, waveColor + '00');
-  gradient.addColorStop(1, waveColor + '15');
-
+  const waveColor = (state.mode === 'CC' || state.mode === 'CP') ? '#0d6efd' : '#198754';
   ctx.strokeStyle = waveColor;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 1.5;
   ctx.lineJoin = 'round';
   ctx.stroke();
-  ctx.shadowColor = waveColor;
-  ctx.shadowBlur = 8;
-  ctx.stroke();
-  ctx.shadowBlur = 0;
 
   // Labels
   ctx.fillStyle = '#6a6a8a';

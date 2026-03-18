@@ -7,9 +7,7 @@
     <title>EV Dynamic Charging Simulator</title>
     <meta name="description"
         content="Interactive simulation of electric vehicle dynamic charging characteristics including CC-CV profiles, harmonics, and grid impact analysis">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -28,13 +26,10 @@
 
     <!-- HERO -->
     <section class="hero" id="hero">
-        <div class="hero-orb orb-1"></div>
-        <div class="hero-orb orb-2"></div>
-        <div class="hero-orb orb-3"></div>
-        <div class="hero-badge">🔬 Interactive Simulation</div>
-        <h1>Dynamic Charging <span class="gradient">Characteristics</span> of Electric Vehicles</h1>
+        <div class="hero-badge">EV Simulator Dashboard</div>
+        <h1>Dynamic Charging Characteristics of Electric Vehicles</h1>
         <p>Explore CC-CV charging profiles, harmonic injection, and grid impact through real-time interactive simulation
-            based on published research</p>
+            based on published research.</p>
         <div class="hero-stats">
             <div class="hero-stat">
                 <span class="hero-stat-value" id="heroVoltage">0V</span>
@@ -227,28 +222,28 @@
         <div class="charts-grid">
             <div class="chart-card glass" id="voltageChartCard">
                 <div class="chart-header">
-                    <h3>🔴 Battery Voltage</h3>
+                    <h3>Battery Voltage</h3>
                     <span class="chart-live" id="voltLive">— V</span>
                 </div>
                 <canvas id="voltageChart" width="600" height="280"></canvas>
             </div>
             <div class="chart-card glass" id="currentChartCard">
                 <div class="chart-header">
-                    <h3>🔵 Charging Current</h3>
+                    <h3>Charging Current</h3>
                     <span class="chart-live" id="currLive">— A</span>
                 </div>
                 <canvas id="currentChart" width="600" height="280"></canvas>
             </div>
             <div class="chart-card glass" id="powerChartCard">
                 <div class="chart-header">
-                    <h3>🟢 Charging Power</h3>
+                    <h3>Charging Power</h3>
                     <span class="chart-live" id="powLive">— kW</span>
                 </div>
                 <canvas id="powerChart" width="600" height="280"></canvas>
             </div>
             <div class="chart-card glass" id="socChartCard">
                 <div class="chart-header">
-                    <h3>🟡 State of Charge</h3>
+                    <h3>State of Charge</h3>
                     <span class="chart-live" id="socLive">— %</span>
                 </div>
                 <canvas id="socChart" width="600" height="280"></canvas>
