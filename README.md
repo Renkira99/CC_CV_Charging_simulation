@@ -362,9 +362,9 @@ Orchestrates the full workflow for one charger preset:
 1. Creates output directory
 2. Builds a `ChargerConfig` from the preset dict
 3. Runs `simulate_charging()` and prints summary statistics
-4. Calls `plot_charging_profile()` → saves `fig1_charging_profile.png`
-5. Calls `plot_harmonics()` → saves `fig2_harmonics.png`
-6. Calls `plot_topology_comparison()` → saves `fig3_topology_comparison.png`
+4. Calls `plot_charging_profile()` → saves `Figure_1_Charging_Profile.png`
+5. Calls `plot_harmonics()` → saves `Figure_2_Harmonic_Analysis.png`
+6. Calls `plot_topology_comparison()` → saves `Figure_3_Topology_Comparison.png`
 
 Returns the output directory path.
 
@@ -408,9 +408,9 @@ python ev_charging_sim.py --output-dir ./results
 Output/
 └── EV_Dynamic_Charging_Simulation_Results/
     ├── Bharat AC-001 (3.3kW)/
-    │   ├── fig1_charging_profile.png
-    │   ├── fig2_harmonics.png
-    │   └── fig3_topology_comparison.png
+    │   ├── Figure_1_Charging_Profile.png
+    │   ├── Figure_2_Harmonic_Analysis.png
+    │   └── Figure_3_Topology_Comparison.png
     ├── AC Level 2 1-phase (7.4kW)/
     │   └── ...
     └── DC Ultra-Fast (150kW)/
