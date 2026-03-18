@@ -9,7 +9,9 @@
 
 This simulator models how an electric vehicle battery charges from a given initial State of Charge (SoC) to a target SoC, using the CC-CV (Constant Current / Constant Voltage) protocol used by all lithium-ion chargers. It also analyses the harmonic distortion each charger type injects into the grid, and compares four converter topologies on efficiency, THD, and power factor.
 
-The simulation runs entirely in Python and saves results as PNG figures. It is designed to feed into a larger grid-level OpenDSS model by providing time-series power demand profiles for each charger type.
+The simulation is provided in two formats:
+1. **Python Simulator (`Python/ev_charging_sim.py`)**: Runs headlessly to produce IEEE-style analytical figures for charging profiles and harmonic distortion.
+2. **Web Simulator (`Simulator/EV_Charging_Simulaion.html`)**: An interactive, browser-based dashboard that visualizes the CC-CV charging process and compliance metrics in real-time without requiring Python dependencies.
 
 ---
 
@@ -419,13 +421,6 @@ One subdirectory per charger preset, each containing three figures. Figure 3 (to
 
 ---
 
-## Connection to OpenDSS
+## Interactive Web Simulator
 
-The `power_kw` time-series array returned by `simulate_charging()` is the direct input to an OpenDSS feeder model. It represents the real power drawn from the grid at each timestep for a single EV on a single charger. In OpenDSS:
-
-- This array becomes a `LoadShape` object attached to a load bus
-- Multiple EVs are modelled by summing offset profiles at the same bus
-- OpenDSS runs power flow at each timestep and computes bus voltages, line currents, and transformer loading
-- The harmonic profiles from Figure 2 inform the harmonic spectrum assigned to each EV load for harmonic power flow analysis
-
-This separation — simulate single-charger behavior here, aggregate and solve the network in OpenDSS — is the correct modelling architecture because the grid sees the aggregate AC demand, while the battery model only needs to see its own charger.
+The `Simulator/` directory contains an interactive, dependency-free HTML/JS version of the charging physics and harmonic analysis models. Simply open `EV_Charging_Simulaion.html` in any modern web browser to interact with the models, adjust battery/charger parameters, and monitor real-time charging curves and spectrum compliance visually.
