@@ -55,11 +55,11 @@ const state = {
 // Charger level presets — Indian Standards (AIS-138 / BIS IS 17017 / MoP Guidelines 2022)
 // cableLimit is the physical cable current rating, which may be lower than maxCurrent
 const chargerPresets = {
-  level1:    { maxPower: 3300,   maxCurrent: 15,  cableLimit: 15,  label: 'Bharat AC-001 (3.3kW)' },   // 230V/15A, Type 2 / IS 60309
-  level2:    { maxPower: 7400,   maxCurrent: 32,  cableLimit: 32,  label: 'AC Level 2 1-φ (7.4kW)' },  // 230V/32A, single-phase
-  level2max: { maxPower: 22000,  maxCurrent: 32,  cableLimit: 32,  label: 'AC Level 2 3-φ (22kW)' },   // 415V/32A, three-phase
-  dcfast50:  { maxPower: 15000,  maxCurrent: 200, cableLimit: 200, label: 'Bharat DC-001 (15kW)' },    // CCS2/CHAdeMO
-  dcfast150: { maxPower: 60000,  maxCurrent: 250, cableLimit: 200, label: 'DC Fast (60kW)' },           // cable limit ~150-200A
+  level1: { maxPower: 3300, maxCurrent: 15, cableLimit: 15, label: 'Bharat AC-001 (3.3kW)' },   // 230V/15A, Type 2 / IS 60309
+  level2: { maxPower: 7400, maxCurrent: 32, cableLimit: 32, label: 'AC Level 2 1-φ (7.4kW)' },  // 230V/32A, single-phase
+  level2max: { maxPower: 22000, maxCurrent: 32, cableLimit: 32, label: 'AC Level 2 3-φ (22kW)' },   // 415V/32A, three-phase
+  dcfast50: { maxPower: 15000, maxCurrent: 200, cableLimit: 200, label: 'Bharat DC-001 (15kW)' },    // CCS2/CHAdeMO
+  dcfast150: { maxPower: 60000, maxCurrent: 250, cableLimit: 200, label: 'DC Fast (60kW)' },           // cable limit ~150-200A
   dcfast350: { maxPower: 150000, maxCurrent: 375, cableLimit: 350, label: 'DC Ultra-Fast (150kW)' }     // cable limit ~350A
 };
 
@@ -67,10 +67,10 @@ const chargerPresets = {
 // Note: Triplen harmonics (3, 9, 15) are 0 in balanced 3-phase topologies
 // cv_thd_stable: active PFC holds THD at light load; passive front end rises in CV tail
 const topologyProfiles = {
-  viennallc: { eta: 0.951, thd_cc: 4.2, thd_cv: 2.1, cv_thd_stable: true,  harmonics: [100, 0.0, 3.2, 2.1, 0.0, 1.4, 0.9, 0.0, 0.6, 0.5] },
-  viennalcl: { eta: 0.938, thd_cc: 5.1, thd_cv: 2.8, cv_thd_stable: true,  harmonics: [100, 0.0, 4.0, 2.8, 0.0, 1.8, 1.1, 0.0, 0.7, 0.6] },
-  afedab:    { eta: 0.94,  thd_cc: 3.8, thd_cv: 1.9, cv_thd_stable: true,  harmonics: [100, 0.0, 2.8, 1.9, 0.0, 1.2, 0.7, 0.0, 0.4, 0.3] },
-  boostfb:   { eta: 0.912, thd_cc: 7.2, thd_cv: 4.0, cv_thd_stable: false, harmonics: [100, 5.5, 3.8, 2.5, 1.5, 1.0, 0.8, 0.5, 0.4, 0.3] }
+  viennallc: { eta: 0.951, thd_cc: 4.2, thd_cv: 2.1, cv_thd_stable: true, harmonics: [100, 0.0, 3.2, 2.1, 0.0, 1.4, 0.9, 0.0, 0.6, 0.5] },
+  viennalcl: { eta: 0.938, thd_cc: 5.1, thd_cv: 2.8, cv_thd_stable: true, harmonics: [100, 0.0, 4.0, 2.8, 0.0, 1.8, 1.1, 0.0, 0.7, 0.6] },
+  afedab: { eta: 0.94, thd_cc: 3.8, thd_cv: 1.9, cv_thd_stable: true, harmonics: [100, 0.0, 2.8, 1.9, 0.0, 1.2, 0.7, 0.0, 0.4, 0.3] },
+  boostfb: { eta: 0.912, thd_cc: 7.2, thd_cv: 4.0, cv_thd_stable: false, harmonics: [100, 5.5, 3.8, 2.5, 1.5, 1.0, 0.8, 0.5, 0.4, 0.3] }
 };
 
 
@@ -138,7 +138,7 @@ function readParams() {
 // ---------- BATTERY MODEL ----------
 // NMC/NCM pack OCV lookup — 13-point curve anchored to [0.82, 1.05]×V_nom.
 // Flat plateau at 20–70% SoC captures the Li-ion characteristic that a polynomial misses.
-const OCV_SOC_PTS  = [0, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100];
+const OCV_SOC_PTS = [0, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100];
 const OCV_NORM_PTS = [0.820, 0.838, 0.855, 0.878, 0.895, 0.908, 0.920, 0.933, 0.950, 0.970, 1.000, 1.028, 1.050];
 
 function linearInterp(xPts, yPts, x) {
@@ -170,9 +170,9 @@ function internalResistance(soc) {
 // Typical derating steps: full rate <70%, 80%/50%/20% at 70/85/95% SoC
 function bmsCurrentLimit(soc, ahCapacity, maxCRate = 2.0) {
   const iMax = ahCapacity * maxCRate;
-  if (soc < 70)  return iMax;
-  if (soc < 85)  return iMax * 0.8;
-  if (soc < 95)  return iMax * 0.5;
+  if (soc < 70) return iMax;
+  if (soc < 85) return iMax * 0.8;
+  if (soc < 95) return iMax * 0.5;
   return iMax * 0.2;
 }
 
@@ -204,11 +204,11 @@ function chargingStep(dt) {
     const iPowerLimit = (-vOcv + Math.sqrt(vOcv ** 2 + 4 * rInt * state.maxPower)) / (2 * rInt);
     // BMS derates current acceptance at high SoC to protect cells
     const iBMS = bmsCurrentLimit(soc, ahCapacity);
-    
+
     // Additional EVSE and Thermal limit constraints (DIN 70121 / ISO 15118)
     const iTemp = state.tempLimit !== undefined ? state.tempLimit : Infinity;
     const iEvse = state.evseMaxLimit !== undefined ? state.evseMaxLimit : Infinity;
-    
+
     // The actual current delivered is the minimum of all constraints
     const iCC = Math.min(iPowerLimit, iBMS, state.cableLimit, state.maxCurrent, iTemp, iEvse);
 
@@ -234,7 +234,7 @@ function chargingStep(dt) {
     state.mode = 'CV';
 
     const progress = (soc - state.ccCvTransition) / Math.max(state.targetSoC - state.ccCvTransition, 1);
-    
+
     // Ramp v_term from last CC terminal voltage → v_max over the first 10% of CV progress.
     // This eliminates the one-timestep power spike caused by jumping straight to vMax
     // while current is still at lastCCCurrent.
@@ -243,11 +243,11 @@ function chargingStep(dt) {
 
     // Start exponential from actual last CC current, not maxCurrent, to avoid entry discontinuity
     const iEntry = state.lastCCCurrent !== null ? state.lastCCCurrent : state.maxCurrent;
-    
+
     // CV exponent: 3.5 is appropriate for fast chargers. Scale down for slow chargers.
     const cRate = state.maxCurrent / ahCapacity;
     const cvExponent = Math.max(1.5, Math.min(1.5 + 2.0 * cRate, 3.5)); // clip to [1.5, 3.5]
-    
+
     let iCV = iEntry * Math.exp(-cvExponent * progress);
 
     // Max current battery can physically absorb at vMax given current OCV and R_int
@@ -256,7 +256,7 @@ function chargingStep(dt) {
 
     // Cutoff current (standard C/20 but capped at 5% of charger max to ensure CV tail runs on slow chargers)
     const cutoffCurrent = Math.min(ahCapacity / 20, state.maxCurrent * 0.05);
-    
+
     if (iCV < cutoffCurrent) {
       state.mode = 'DONE';
       state.current = 0;
@@ -589,10 +589,10 @@ function drawChart(canvasId, data, options) {
 
   if (!data || data.length === 0) {
     // Empty state placeholder
-    ctx.fillStyle = '#000';
-    ctx.font = '10pt "Times New Roman", Times, serif';
+    ctx.fillStyle = '#3a3a6a';
+    ctx.font = '500 13px Inter, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('No data', W / 2, H / 2);
+    ctx.fillText('Start simulation to see data', W / 2, H / 2);
     return;
   }
 
@@ -617,51 +617,41 @@ function drawChart(canvasId, data, options) {
     return pad.top + plotH - ((val - yMin) / (yMax - yMin)) * plotH;
   }
 
-  // Bounding box
-  ctx.strokeStyle = '#000';
+  // Grid lines
+  ctx.strokeStyle = 'rgba(42, 42, 69, 0.6)';
   ctx.lineWidth = 1;
-  ctx.strokeRect(pad.left, pad.top, plotW, plotH);
-
-  // Y axis ticks & labels
-  ctx.textAlign = 'right';
-  ctx.fillStyle = '#000';
-  ctx.font = '9pt "Times New Roman", Times, serif';
   const yTicks = 5;
   for (let i = 0; i <= yTicks; i++) {
     const yVal = yMin + (yMax - yMin) * (i / yTicks);
     const y = mapY(yVal);
-    
-    // Inward ticks
     ctx.beginPath();
     ctx.moveTo(pad.left, y);
-    ctx.lineTo(pad.left + 4, y);
-    ctx.moveTo(W - pad.right, y);
-    ctx.lineTo(W - pad.right - 4, y);
+    ctx.lineTo(W - pad.right, y);
     ctx.stroke();
 
-    ctx.fillText(yVal.toFixed(options.yDecimals || 0), pad.left - 6, y + 3);
+    // Y label
+    ctx.fillStyle = '#6a6a8a';
+    ctx.font = '500 10px JetBrains Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(yVal.toFixed(options.yDecimals || 0), pad.left - 8, y + 3);
   }
 
-  // X axis labels & ticks
-  ctx.textAlign = 'center';
+  // X axis labels
   const xTicks = 6;
   for (let i = 0; i <= xTicks; i++) {
     const xVal = xMin + (xMax - xMin) * (i / xTicks);
     const x = mapX(xVal);
-
-    ctx.beginPath();
-    ctx.moveTo(x, pad.top + plotH);
-    ctx.lineTo(x, pad.top + plotH - 4);
-    ctx.moveTo(x, pad.top);
-    ctx.lineTo(x, pad.top + 4);
-    ctx.stroke();
-
-    ctx.fillText(xVal.toFixed(0), x, pad.top + plotH + 14);
+    ctx.fillStyle = '#6a6a8a';
+    ctx.font = '500 10px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(xVal.toFixed(0), x, H - pad.bottom + 20);
   }
 
   // Axis labels
-  ctx.font = '10pt "Times New Roman", Times, serif';
-  ctx.fillText(options.xLabel || '', pad.left + plotW / 2, H - 4);
+  ctx.fillStyle = '#6a6a8a';
+  ctx.font = '600 11px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(options.xLabel || '', W / 2, H - 4);
   ctx.save();
   ctx.translate(14, pad.top + plotH / 2);
   ctx.rotate(-Math.PI / 2);
@@ -680,9 +670,9 @@ function drawChart(canvasId, data, options) {
     }
     if (transTime !== null) {
       const x = mapX(transTime);
-      ctx.strokeStyle = '#000';
+      ctx.strokeStyle = 'rgba(255, 200, 87, 0.5)';
       ctx.lineWidth = 1;
-      ctx.setLineDash([2, 5]);
+      ctx.setLineDash([5, 5]);
       ctx.beginPath();
       ctx.moveTo(x, pad.top);
       ctx.lineTo(x, pad.top + plotH);
@@ -690,10 +680,10 @@ function drawChart(canvasId, data, options) {
       ctx.setLineDash([]);
 
       // Label
-      ctx.fillStyle = '#000';
-      ctx.font = '9pt "Times New Roman", Times, serif';
+      ctx.fillStyle = 'rgba(255, 200, 87, 0.8)';
+      ctx.font = '600 9px Inter, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('CC|CV', x, pad.top - 6);
+      ctx.fillText('CC → CV', x, pad.top - 8);
     }
   }
 
@@ -704,10 +694,10 @@ function drawChart(canvasId, data, options) {
   for (let i = 1; i < data.length; i++) {
     ctx.lineTo(mapX(xData[i]), mapY(data[i]));
   }
-  const color = '#000';
+  const color = options.color || '#0d6efd';
 
   ctx.strokeStyle = color;
-  ctx.lineWidth = 1.2;
+  ctx.lineWidth = 1.5;
   ctx.lineJoin = 'round';
   ctx.stroke();
 
@@ -742,10 +732,10 @@ function drawBarChart(canvasId, labels, values, options) {
   ctx.clearRect(0, 0, W, H);
 
   if (!values || values.length === 0) {
-    ctx.fillStyle = '#000';
-    ctx.font = '10pt "Times New Roman", Times, serif';
+    ctx.fillStyle = '#3a3a6a';
+    ctx.font = '500 13px Inter, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('No data', W / 2, H / 2);
+    ctx.fillText('Start simulation to see data', W / 2, H / 2);
     return;
   }
 
@@ -753,75 +743,77 @@ function drawBarChart(canvasId, labels, values, options) {
   const barW = plotW / values.length * 0.65;
   const gap = plotW / values.length * 0.35;
 
-  // Bounding box
-  ctx.strokeStyle = '#000';
+  // Grid
+  ctx.strokeStyle = 'rgba(42, 42, 69, 0.6)';
   ctx.lineWidth = 1;
-  ctx.strokeRect(pad.left, pad.top, plotW, plotH);
-
-  // Grid / Ticks
-  ctx.fillStyle = '#000';
-  ctx.font = '9pt "Times New Roman", Times, serif';
-  ctx.textAlign = 'right';
   for (let i = 0; i <= 4; i++) {
     const y = pad.top + plotH - (plotH * i / 4);
-    
-    // Inward ticks
     ctx.beginPath();
     ctx.moveTo(pad.left, y);
-    ctx.lineTo(pad.left + 4, y);
-    ctx.moveTo(W - pad.right, y);
-    ctx.lineTo(W - pad.right - 4, y);
+    ctx.lineTo(W - pad.right, y);
     ctx.stroke();
 
-    ctx.fillText((yMax * i / 4).toFixed(1), pad.left - 6, y + 3);
+    ctx.fillStyle = '#6a6a8a';
+    ctx.font = '500 10px JetBrains Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText((yMax * i / 4).toFixed(1), pad.left - 8, y + 3);
   }
 
-  // Limit line (IEC)
+  // Limit line
   if (options.limitLine) {
     const y = pad.top + plotH - (plotH * options.limitLine / yMax);
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([2, 4]);
+    ctx.strokeStyle = 'rgba(255, 82, 82, 0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
     ctx.beginPath();
     ctx.moveTo(pad.left, y);
     ctx.lineTo(W - pad.right, y);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.fillStyle = '#000';
-    ctx.font = '9pt "Times New Roman", Times, serif';
+    ctx.fillStyle = 'rgba(255, 82, 82, 0.8)';
+    ctx.font = '600 9px Inter, sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('IEC Limit', W - pad.right - 50, y - 6);
+    ctx.fillText('IEC 61000-3-2 Limit', W - pad.right - 80, y - 6);
   }
 
-  // Bars (Grayscale)
-  const colors = ['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.2)'];
+  // Bars
+  const colors = options.colors || ['#7c6cf0', '#00d4c8', '#ff6b9d', '#ffc857', '#4ae0a0',
+    '#7c6cf0', '#00d4c8', '#ff6b9d', '#ffc857'];
 
   values.forEach((val, i) => {
     const x = pad.left + (plotW / values.length) * i + gap / 2;
     const barH = (val / yMax) * plotH;
     const y = pad.top + plotH - barH;
 
-    ctx.fillStyle = colors[i % colors.length];
+    const c = colors[i % colors.length];
+    ctx.fillStyle = c;
 
-    // Sharp rect
+    // Rounded rect
+    const r = 4;
     ctx.beginPath();
-    ctx.rect(x, y, barW, barH);
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + barW - r, y);
+    ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
+    ctx.lineTo(x + barW, pad.top + plotH);
+    ctx.lineTo(x, pad.top + plotH);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1;
-    ctx.stroke();
 
 
 
     // Value on top
-    ctx.fillStyle = '#000';
-    ctx.font = '8pt "Times New Roman", Times, serif';
+    ctx.fillStyle = '#e8e8f4';
+    ctx.font = '600 9px JetBrains Mono, monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(val.toFixed(1), x + barW / 2, y - 4);
+    ctx.fillText(val.toFixed(1) + '%', x + barW / 2, y - 8);
 
     // Label
-    ctx.font = '9pt "Times New Roman", Times, serif';
+    ctx.fillStyle = '#6a6a8a';
+    ctx.font = '500 9px Inter, sans-serif';
+    ctx.textAlign = 'center';
     ctx.save();
     ctx.translate(x + barW / 2, H - pad.bottom + 15);
     ctx.fillText(labels[i], 0, 0);
@@ -850,27 +842,20 @@ function drawWaveform(canvasId) {
   ctx.clearRect(0, 0, W, H);
 
   if (state.mode === '—' || state.mode === 'DONE') {
-    ctx.fillStyle = '#000';
-    ctx.font = '10pt "Times New Roman", Times, serif';
+    ctx.fillStyle = '#3a3a6a';
+    ctx.font = '500 13px Inter, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(state.mode === 'DONE' ? 'DONE' : 'No data', W / 2, H / 2);
+    ctx.fillText(state.mode === 'DONE' ? 'Charging complete' : 'Start simulation to see waveform', W / 2, H / 2);
     return;
   }
 
-  // Bounding Box
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(pad.left, pad.top, plotW, plotH);
-
   // Zero line
-  ctx.strokeStyle = '#000';
+  ctx.strokeStyle = 'rgba(42, 42, 69, 0.6)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(pad.left, midY);
-  ctx.setLineDash([2, 4]);
   ctx.lineTo(W - pad.right, midY);
   ctx.stroke();
-  ctx.setLineDash([]);
 
   // Generate waveform: fundamental + harmonics
   const harm = computeHarmonics();
@@ -880,7 +865,7 @@ function drawWaveform(canvasId) {
 
   // Pure sine (reference)
   ctx.beginPath();
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+  ctx.strokeStyle = 'rgba(106, 106, 138, 0.3)';
   ctx.lineWidth = 1;
   for (let i = 0; i <= points; i++) {
     const x = pad.left + (i / points) * plotW;
@@ -908,23 +893,23 @@ function drawWaveform(canvasId) {
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   }
 
-  const waveColor = '#000';
+  const waveColor = (state.mode === 'CC' || state.mode === 'CP') ? '#0d6efd' : '#198754';
   ctx.strokeStyle = waveColor;
-  ctx.lineWidth = 1.2;
+  ctx.lineWidth = 1.5;
   ctx.lineJoin = 'round';
   ctx.stroke();
 
   // Labels
-  ctx.fillStyle = '#000';
-  ctx.font = '9pt "Times New Roman", Times, serif';
+  ctx.fillStyle = '#6a6a8a';
+  ctx.font = '600 10px Inter, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(`Time (cycles)`, W / 2, H - 4);
+  ctx.fillText(`Time (cycles at ${GRID_FREQ_HZ} Hz — Indian Grid)`, W / 2, H - 4);
 
   // Mode label
-  ctx.fillStyle = '#000';
-  ctx.font = '9pt "Times New Roman", Times, serif';
+  ctx.fillStyle = waveColor;
+  ctx.font = '700 11px Inter, sans-serif';
   ctx.textAlign = 'right';
-  ctx.fillText((state.mode === 'DONE' ? 'DONE' : state.mode) + ' — THD: ' + harm.thd.toFixed(1) + '%', W - pad.right, pad.top + 14);
+  ctx.fillText((state.mode === 'DONE' ? 'DONE' : state.mode + ' Mode') + ' — THD: ' + harm.thd.toFixed(1) + '%', W - pad.right, pad.top + 14);
 }
 
 
