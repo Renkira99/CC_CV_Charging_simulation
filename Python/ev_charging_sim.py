@@ -281,7 +281,7 @@ def run_simulation_for_preset(preset_name, topology, base_output_dir):
     print(f"   CC→CV transition at: {cc_time:.0f} min (SoC = {chg.cc_cv_transition}%)")
     print(f"   Peak power: {np.max(data['power_kw']):.1f} kW")
     print(f"   Peak current: {np.max(data['current']):.1f} A")
-    plot_charging_profile(data, topology, os.path.join(preset_dir, 'fig1_charging_profile.png'))
+    plot_charging_profile(data, topology, os.path.join(preset_dir, 'Figure_1_Charging_Profile.png'))
 
     # --- 2. Harmonic Analysis ---
     print("\n⚡ [2/3] Running harmonic analysis...")
@@ -293,7 +293,7 @@ def run_simulation_for_preset(preset_name, topology, base_output_dir):
     print(f"   Power Factor (CV): {power_factor_from_thd(profile['thd_cv']):.4f}")
     compliant = profile['thd_cc'] <= 5.0 and all(v <= 4.0 for v in profile['harmonics'].values())
     print(f"   IEEE 519 / IS 16528 Compliance: {'✅ PASS' if compliant else '❌ FAIL'}")
-    plot_harmonics(data, topology, os.path.join(preset_dir, 'fig2_harmonics.png'))
+    plot_harmonics(data, topology, os.path.join(preset_dir, 'Figure_2_Harmonic_Analysis.png'))
 
     # --- 3. Topology Comparison ---
     print("\n🔄 [3/3] Comparing converter topologies...")
@@ -301,12 +301,12 @@ def run_simulation_for_preset(preset_name, topology, base_output_dir):
         p = TOPOLOGY_PROFILES[name]
         status = '✅' if p['thd_cc'] <= 5.0 else '❌'
         print(f"   {status} {name}: THD={p['thd_cc']:.1f}%, η={p['eta']*100:.1f}%")
-    plot_topology_comparison(os.path.join(preset_dir, 'fig3_topology_comparison.png'))
+    plot_topology_comparison(os.path.join(preset_dir, 'Figure_3_Topology_Comparison.png'))
 
     print("\n  Saved figures:")
-    print(f"     {preset_dir}/fig1_charging_profile.png")
-    print(f"     {preset_dir}/fig2_harmonics.png")
-    print(f"     {preset_dir}/fig3_topology_comparison.png")
+    print(f"     {preset_dir}/Figure_1_Charging_Profile.png")
+    print(f"     {preset_dir}/Figure_2_Harmonic_Analysis.png")
+    print(f"     {preset_dir}/Figure_3_Topology_Comparison.png")
 
     return preset_dir
 
@@ -358,9 +358,9 @@ def main():
     if len(saved_dirs) == 1:
         preset_dir = saved_dirs[0]
         os.system(
-            f'open "{preset_dir}/fig1_charging_profile.png" '
-            f'"{preset_dir}/fig2_harmonics.png" '
-            f'"{preset_dir}/fig3_topology_comparison.png"'
+            f'open "{preset_dir}/Figure_1_Charging_Profile.png" '
+            f'"{preset_dir}/Figure_2_Harmonic_Analysis.png" '
+            f'"{preset_dir}/Figure_3_Topology_Comparison.png"'
         )
 
 
