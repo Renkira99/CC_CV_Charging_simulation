@@ -3,14 +3,27 @@ Harmonic Characterization & Plotting for EV Charging Simulator
 IEEE Transactions-style publication figures.
 """
 
-import numpy as np
+import argparse
+import os
+import sys
+import warnings
+
+from runtime_bootstrap import bootstrap_runtime, open_files_in_default_app
+
+bootstrap_runtime(
+    script_file=__file__,
+    argv=sys.argv,
+    required_modules=('numpy', 'matplotlib'),
+    is_main=__name__ == '__main__',
+)
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from matplotlib.ticker import AutoMinorLocator, MultipleLocator
+import numpy as np
+from matplotlib.ticker import AutoMinorLocator
 import matplotlib.patches as mpatches
-import warnings
 warnings.filterwarnings('ignore')
 
 from ev_charging_sim import TOPOLOGY_PROFILES, BatteryConfig, GRID_FREQ_HZ
@@ -260,7 +273,7 @@ def plot_charging_profile(data, topology_name, save_path=None):
         fig.savefig(save_path, dpi=300, bbox_inches='tight',
                     facecolor='white')
         print(f'✅ Saved: {save_path}')
-    plt.show()
+    plt.close(fig)
 
 
 # ============================================================
@@ -310,7 +323,7 @@ def plot_harmonics(data, topology_name, save_path=None):
     # ── 2. Harmonic spectrum ─────────────────────────────────
     ax2 = fig.add_subplot(gs[1, 0])
     orders_cc, mags_cc = harmonic_spectrum(topology_name, 'CC')
-    orders_cv, mags_cv = harmonic_spectrum(topology_name, 'CV')
+    _, mags_cv = harmonic_spectrum(topology_name, 'CV')
     x = np.arange(len(orders_cc))
     w = 0.35
 
@@ -318,10 +331,10 @@ def plot_harmonics(data, topology_name, save_path=None):
                     color='#333333', hatch='///',
                     edgecolor='black', linewidth=0.5,
                     label='CC/CP Mode', zorder=3)
-    bars2 = ax2.bar(x + w / 2, mags_cv, w,
-                    color='#999999', hatch='...',
-                    edgecolor='black', linewidth=0.5,
-                    label='CV Mode', zorder=3)
+    ax2.bar(x + w / 2, mags_cv, w,
+            color='#999999', hatch='...',
+            edgecolor='black', linewidth=0.5,
+            label='CV Mode', zorder=3)
 
     ax2.axhline(4.0, color=LIMIT_COLOR, linestyle='--',
                 linewidth=0.9, label='IEEE 519 limit (4%)', zorder=4)
@@ -350,7 +363,8 @@ def plot_harmonics(data, topology_name, save_path=None):
     ax3.axhline(5.0, color=LIMIT_COLOR, linestyle='--',
                 linewidth=0.9, label='IEEE 519 THD limit (5%)', zorder=3)
 
-    if trans_idx := next((i for i, m in enumerate(data['mode']) if m == 'CV'), None):
+    trans_idx = next((i for i, m in enumerate(data['mode']) if m == 'CV'), None)
+    if trans_idx is not None and trans_idx > 0:
         ax3.axvline(data['soc'][trans_idx], color='black',
                     linestyle=':', linewidth=0.8, alpha=0.7)
         ax3.text(data['soc'][trans_idx] + 1,
@@ -442,7 +456,7 @@ def plot_harmonics(data, topology_name, save_path=None):
         fig.savefig(save_path, dpi=300, bbox_inches='tight',
                     facecolor='white')
         print(f'✅ Saved: {save_path}')
-    plt.show()
+    plt.close(fig)
 
 
 # ============================================================
@@ -468,10 +482,23 @@ def plot_topology_comparison(save_path=None):
     x           = np.arange(len(names))
     w           = 0.35
 
+    thd_cc = []
+    thd_cv = []
+    etas = []
+    pf_cc = []
+    pf_cv = []
+    for name in names:
+        profile = TOPOLOGY_PROFILES[name]
+        cc_val = profile['thd_cc']
+        cv_val = profile['thd_cv']
+        thd_cc.append(cc_val)
+        thd_cv.append(cv_val)
+        etas.append(profile['eta'] * 100)
+        pf_cc.append(power_factor_from_thd(cc_val))
+        pf_cv.append(power_factor_from_thd(cv_val))
+
     # ── THD ──────────────────────────────────────────────────
     ax1 = axes[0]
-    thd_cc = [TOPOLOGY_PROFILES[n]['thd_cc'] for n in names]
-    thd_cv = [TOPOLOGY_PROFILES[n]['thd_cv'] for n in names]
 
     for i, (v_cc, v_cv) in enumerate(zip(thd_cc, thd_cv)):
         ax1.bar(i - w / 2, v_cc, w,
@@ -498,12 +525,11 @@ def plot_topology_comparison(save_path=None):
 
     # ── Efficiency ────────────────────────────────────────────
     ax2 = axes[1]
-    etas = [TOPOLOGY_PROFILES[n]['eta'] * 100 for n in names]
 
     for i, v in enumerate(etas):
-        bar = ax2.bar(i, v, 0.6,
-                      color=GRAYS[i % 4], hatch=HATCHES[i % 4],
-                      edgecolor='black', linewidth=0.5, zorder=3)
+        ax2.bar(i, v, 0.6,
+            color=GRAYS[i % 4], hatch=HATCHES[i % 4],
+            edgecolor='black', linewidth=0.5, zorder=3)
         ax2.text(i, v + 0.08, f'{v:.1f}%',
                  ha='center', fontsize=6.5, fontweight='bold')
 
@@ -516,8 +542,6 @@ def plot_topology_comparison(save_path=None):
 
     # ── Power factor ─────────────────────────────────────────
     ax3 = axes[2]
-    pf_cc = [power_factor_from_thd(TOPOLOGY_PROFILES[n]['thd_cc']) for n in names]
-    pf_cv = [power_factor_from_thd(TOPOLOGY_PROFILES[n]['thd_cv']) for n in names]
 
     for i, (v_cc, v_cv) in enumerate(zip(pf_cc, pf_cv)):
         ax3.bar(i - w / 2, v_cc, w,
@@ -553,4 +577,82 @@ def plot_topology_comparison(save_path=None):
         fig.savefig(save_path, dpi=300, bbox_inches='tight',
                     facecolor='white')
         print(f'✅ Saved: {save_path}')
-    plt.show()
+    plt.close(fig)
+
+
+def run_harmonic_analysis_for_preset(preset_name, topology, base_output_dir):
+    """Run harmonic-analysis figure generation for one charger preset."""
+    from ev_charging_sim import CHARGER_PRESETS, ChargerConfig, preset_output_dir, simulate_charging
+
+    preset_dir = preset_output_dir(base_output_dir, preset_name)
+    os.makedirs(preset_dir, exist_ok=True)
+
+    chg = ChargerConfig()
+    preset = CHARGER_PRESETS[preset_name]
+    chg.max_power_w = preset['power']
+    chg.max_current_a = preset['current']
+    chg.cable_limit_a = preset.get('cable', preset['current'])
+
+    data = simulate_charging(chg=chg)
+    fig_path = os.path.join(preset_dir, 'Figure_2_Harmonic_Analysis.png')
+
+    print('\n' + '-' * 64)
+    print(f'Harmonic analysis for {preset_name}')
+    print(f'Output folder: {preset_dir}')
+    print('-' * 64)
+    plot_harmonics(data, topology, fig_path)
+
+    return preset_dir, fig_path
+
+
+def main():
+    """CLI entrypoint for standalone harmonic-analysis runs."""
+    from ev_charging_sim import CHARGER_PRESETS
+
+    parser = argparse.ArgumentParser(description='Harmonic Characterization Module')
+    parser.add_argument(
+        '--charger',
+        type=str,
+        default='all',
+        choices=['all'] + list(CHARGER_PRESETS.keys()),
+        help='Run one charger preset or all presets.',
+    )
+    parser.add_argument(
+        '--topology',
+        type=str,
+        default='Vienna + LLC Resonant (η=95.1%)',
+        choices=list(TOPOLOGY_PROFILES.keys()),
+        help='Converter topology profile.',
+    )
+    parser.add_argument(
+        '--output-dir',
+        type=str,
+        default=os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            'Output',
+            'EV_Dynamic_Charging_Simulation_Results',
+        ),
+        help='Base output directory for figures.',
+    )
+    args = parser.parse_args()
+
+    os.makedirs(args.output_dir, exist_ok=True)
+
+    preset_names = list(CHARGER_PRESETS.keys()) if args.charger == 'all' else [args.charger]
+    outputs = []
+    for preset_name in preset_names:
+        outputs.append(run_harmonic_analysis_for_preset(preset_name, args.topology, args.output_dir))
+
+    print('\n' + '=' * 64)
+    print(f'Completed harmonic analysis for {len(outputs)} preset(s).')
+    for preset_dir, _ in outputs:
+        print(f'  {preset_dir}')
+    print('=' * 64)
+
+    if len(outputs) == 1:
+        _, fig_path = outputs[0]
+        open_files_in_default_app([fig_path])
+
+
+if __name__ == '__main__':
+    main()

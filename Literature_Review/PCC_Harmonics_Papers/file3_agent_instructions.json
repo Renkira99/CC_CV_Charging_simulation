@@ -1,0 +1,364 @@
+{
+  "project": {
+    "name": "EV Dynamic Charging Simulator — PCC Harmonic Analysis Module",
+    "repository": "Renkira99/CC_CV_Charging_simulation",
+    "working_directory": "/Users/overwatch/Documents/CC_CV_Charging_Simulation",
+    "python_interpreter": "venv/bin/python",
+    "grid_standard": "Indian LV Distribution, 440V, 50Hz (CEA Regulations)"
+  },
+
+  "agent_task": {
+    "objective": "Build pcc_harmonic_analysis.py — the third and final module of the EV charging simulator. This file computes actual harmonic currents in amps injected at the 440V PCC, checks compliance against IEC and IEEE standards, computes transformer derating, and produces IEEE-style publication figures.",
+    "output_file": "Python/pcc_harmonic_analysis.py",
+    "reference_folder": "Literature_Review/PCC_Harmonics_Papers/",
+    "theory_document": "Literature_Review/PCC_Harmonics_Papers/file3_theory_and_implementation.md",
+    "before_coding": [
+      "Read file3_theory_and_implementation.md in full before writing any code",
+      "Read ev_charging_sim.py in full to understand the simulation output structure",
+      "Read harmonic_characterization.py in full to understand available functions and IEEE style",
+      "Check the four paper PDFs in Literature_Review/PCC_Harmonic_Papers/ for any numerical data not captured in the theory document"
+    ]
+  },
+
+  "project_structure": {
+    "Python/": {
+      "ev_charging_sim.py": "File 1 — CC-CV simulation, battery model, charger presets, topology profiles. Entry point. Import from here.",
+      "harmonic_characterization.py": "File 2 — Harmonic analysis functions, IEEE-style plotting, compliance table. Import from here.",
+      "pcc_harmonic_analysis.py": "File 3 — TO BE BUILT. PCC harmonic current calculation in amps."
+    },
+    "Literature_Review/PCC_Harmonics_Papers/": {
+      "file3_theory_and_implementation.md": "Full theory, equations, literature basis, and implementation guide. READ THIS FIRST.",
+      "smartcities-05-00027-v2.pdf": "Mariscotti — harmonic emissions of EV chargers, IEC 61000-3-2 amp limits",
+      "IEEE_Access_2025.pdf": "Senol & Bayram — EV smart charging harmonics, 8 EV models, THD vs charging current",
+      "Grid harmonic impact of multiple electric vehicle fast charging.pdf": "Lucas et al. — grid harmonic impact of multiple DC fast chargers, TDD methodology",
+      "Power_quality_impact_of_electric_vehicle_charging_station_on_utility_grid11.pdf": "Sivaraman et al. — Indian 440V grid, 200kVA transformer derating, FFT dominant orders"
+    },
+    "Output/EV_Dynamic_Charging_Simulation_Results/": "Where figures are saved, one subfolder per charger preset"
+  },
+
+  "existing_functions_to_import": {
+    "from ev_charging_sim": [
+      "simulate_charging",
+      "CHARGER_PRESETS",
+      "TOPOLOGY_PROFILES",
+      "BatteryConfig",
+      "ChargerConfig",
+      "GRID_FREQ_HZ",
+      "preset_output_dir"
+    ],
+    "from harmonic_characterization": [
+      "harmonic_spectrum",
+      "power_factor_from_thd",
+      "compute_thd_profile",
+      "setup_ieee_style",
+
+      "IEEE_SINGLE", "IEEE_DOUBLE", "GRAYS", "HATCHES",
+      "PASS_COLOR", "FAIL_COLOR", "LIMIT_COLOR"
+    ],
+    "import_pattern": "Use local imports inside functions to avoid circular imports. ev_charging_sim imports from harmonic_characterization at function level. Follow the same pattern — do not add top-level cross-imports."
+  },
+
+  "constants": {
+    "IEC_61000_3_2_A": {
+      "description": "IEC 61000-3-2 Class A absolute harmonic current limits in amps. Applies to equipment drawing ≤16A per phase. Source: Mariscotti 2022, MDPI Smart Cities.",
+      "values": {"3": 2.30, "5": 1.14, "7": 0.77, "9": 0.40, "11": 0.33, "13": 0.21},
+      "applies_to_presets": ["Bharat AC-001 (3.3kW)"]
+    },
+    "IEC_61000_3_12_PCT": {
+      "description": "IEC 61000-3-12 harmonic limits as percentage of fundamental. Applies to equipment 16A–75A per phase. Rsc >= 350 column. Source: IEC 61000-3-12 standard, cited in Gemini deep research synthesis.",
+      "values": {"3": 21.6, "5": 10.7, "7": 7.2, "9": 3.8, "11": 3.1, "13": 2.0},
+      "applies_to_presets": ["AC Level 2 1-phase (7.4kW)", "AC Level 2 3-phase (22kW)"]
+    },
+    "IS_16528_TDD_LIMIT_PCT": {
+      "description": "IS 16528 / IEEE 519 Total Demand Distortion limit at PCC for Indian LV distribution. System-level standard, not equipment-level. Applies to DC chargers (off-board). Value: 5.0%",
+      "value": 5.0,
+      "applies_to_presets": ["Bharat DC-001 (15kW)", "DC Fast (60kW)", "DC Ultra-Fast (150kW)"]
+    },
+    "GRID_VOLTAGE_V": {
+      "description": "Indian LV distribution standard voltage at PCC.",
+      "value": 440.0
+    },
+    "HARMONIC_ORDERS": {
+      "description": "Harmonic orders to analyse. Confirmed as dominant by Sivaraman 2021 FFT (250Hz, 350Hz, 550Hz, 650Hz on 50Hz grid) and Senol 2024.",
+      "value": [3, 5, 7, 9, 11, 13]
+    },
+    "SIVARAMAN_VALIDATION_ANCHOR": {
+      "description": "Measured validation point from Sivaraman 2021 IEEE MASCON. 50kW DC fast charger on 440V Indian feeder produced 62.24A fundamental. Used to validate compute_fundamental_current().",
+      "power_kw": 50,
+      "voltage_v": 440,
+      "phases": 3,
+      "measured_fundamental_a": 62.24,
+      "pf_assumed": 0.989
+    },
+    "LUCAS_TDD_REFERENCE": {
+      "description": "From Lucas 2015 — DC fast charger at 67.5A nominal produces TDD of ~12%. At this TDD, aggregate harmonic modelled as 6.1A per order. Use as DC fast charger validation reference.",
+      "nominal_current_a": 67.5,
+      "tdd_pct": 12.0,
+      "modelled_harmonic_per_order_a": 6.1
+    },
+    "SIVARAMAN_DERATING_REFERENCE": {
+      "description": "Transformer derating from Sivaraman 2021 for 200kVA transformer. Use to validate compute_transformer_derating().",
+      "rated_kva": 200,
+      "1_ev": {"thd_pct": 4.67, "derated_kva": 196.63},
+      "3_evs": {"thd_pct": 14.07, "derated_kva": 191.64},
+      "5_evs": {"thd_pct": 23.55, "derated_kva": 186.11}
+    }
+  },
+
+  "topology_rules": {
+    "description": "Harmonic order rules based on charger phase configuration. Source: Senol 2024 (topology rules), Sivaraman 2021 (FFT dominant orders at 50Hz).",
+    "single_phase_presets": ["Bharat AC-001 (3.3kW)", "AC Level 2 1-phase (7.4kW)"],
+    "three_phase_presets": ["AC Level 2 3-phase (22kW)", "Bharat DC-001 (15kW)", "DC Fast (60kW)", "DC Ultra-Fast (150kW)"],
+    "single_phase_rules": {
+      "dominant_orders": [3, 5, 7],
+      "present_but_lower": [9, 11, 13],
+      "triplen_cancel": false,
+      "neutral_current_risk": "h3 and h9 accumulate in neutral conductor of 3-phase 4-wire Indian networks. Safety concern for undersized neutral cables.",
+      "citation": "Senol 2024"
+    },
+    "three_phase_rules": {
+      "dominant_orders": [5, 7, 11, 13],
+      "zero_orders": [3, 9],
+      "triplen_cancel": true,
+      "triplen_cancel_reason": "Balanced three-phase systems mathematically cancel all triplen harmonics (3rd, 9th, 15th) at the neutral point.",
+      "citation": "Senol 2024, Sivaraman 2021"
+    }
+  },
+
+  "functions_to_build": {
+    "compute_fundamental_current": {
+      "signature": "compute_fundamental_current(power_w, grid_voltage, pf, phases)",
+      "description": "Compute AC fundamental current drawn from grid at PCC.",
+      "equations": {
+        "single_phase": "I = P / (V * PF)",
+        "three_phase": "I = P / (V * sqrt(3) * PF)"
+      },
+      "validation": "At 50kW, 440V, 3-phase, PF=0.989: should return ~62.24A (Sivaraman 2021)",
+      "citation": "Sivaraman 2021 IEEE MASCON"
+    },
+
+    "get_charger_phases": {
+      "signature": "get_charger_phases(preset_name)",
+      "description": "Return 1 or 3 based on preset. Single-phase: Bharat AC-001, AC Level 2 1-phase. Three-phase: everything else.",
+      "returns": "int (1 or 3)"
+    },
+
+    "get_applicable_standard": {
+      "signature": "get_applicable_standard(preset_name)",
+      "description": "Return which compliance standard applies.",
+      "mapping": {
+        "Bharat AC-001 (3.3kW)": "IEC_61000_3_2",
+        "AC Level 2 1-phase (7.4kW)": "IEC_61000_3_12",
+        "AC Level 2 3-phase (22kW)": "IEC_61000_3_12",
+        "Bharat DC-001 (15kW)": "IEEE_519_IS_16528",
+        "DC Fast (60kW)": "IEEE_519_IS_16528",
+        "DC Ultra-Fast (150kW)": "IEEE_519_IS_16528"
+      },
+      "rationale": "IEC 61000-3-2 covers equipment ≤16A. IEC 61000-3-12 covers 16A–75A. IEEE 519/IS 16528 covers system-level PCC assessment for large off-board DC chargers."
+    },
+
+    "compute_pcc_harmonic_currents": {
+      "signature": "compute_pcc_harmonic_currents(data, topology_name, preset_name, grid_voltage=440.0)",
+      "description": "Core calculation. For each timestep compute fundamental current and individual harmonic currents in amps at the PCC.",
+      "inputs": {
+        "data": "Dict returned by simulate_charging() — contains time_min, power_kw, soc, mode arrays",
+        "topology_name": "Key into TOPOLOGY_PROFILES",
+        "preset_name": "Key into CHARGER_PRESETS",
+        "grid_voltage": "440.0 for Indian grid"
+      },
+      "algorithm": [
+        "1. For each timestep t: get power_w = data['power_kw'][t] * 1000",
+        "2. Get mode = data['mode'][t]",
+        "3. Compute THD at this SoC/mode using compute_thd_profile() — single point version",
+        "4. Compute PF = power_factor_from_thd(THD)",
+        "5. Determine phases = get_charger_phases(preset_name)",
+        "6. Compute I_fundamental = compute_fundamental_current(power_w, grid_voltage, PF, phases)",
+        "7. Get harmonic percentages from TOPOLOGY_PROFILES[topology_name]['harmonics']",
+        "8. Apply topology rules: if three-phase, set H3=0 and H9=0",
+        "9. For each order n in [3,5,7,9,11,13]: I_n = (H_n / 100) * I_fundamental",
+        "10. Store all values per timestep"
+      ],
+      "tdd_calculation": {
+        "formula": "TDD = sqrt(sum(I_n^2)) / I_L * 100",
+        "I_L": "Maximum fundamental current across entire charge cycle (peak demand, CC mode)",
+        "note": "TDD uses I_L not instantaneous I_fundamental. This is the IEEE 519 definition. Prevents artificial inflation during CV tail.",
+        "citation": "Lucas 2015, IEEE 519-2022"
+      },
+      "returns": {
+        "time_min": "numpy array",
+        "i_fundamental": "numpy array — AC grid current at each timestep (A)",
+        "harmonic_currents": "dict keyed by order {3,5,7,9,11,13} — each value is numpy array (A)",
+        "tdd": "numpy array — TDD percentage at each timestep",
+        "i_L": "float — peak demand current scalar (A), used as TDD denominator"
+      }
+    },
+
+    "check_compliance": {
+      "signature": "check_compliance(pcc_data, preset_name, topology_name)",
+      "description": "Check harmonic compliance at the worst-case point (peak CC mode — maximum absolute amps).",
+      "peak_index": "Index where i_fundamental is maximum — this is the worst case for absolute amp limits",
+      "returns": "List of tuples: (order, measured_value, limit, unit_string, pass_bool)",
+      "also_return": "overall_pass bool, standard_name string",
+      "note": "For IEEE 519/IS 16528, also check peak TDD against IS_16528_TDD_LIMIT_PCT"
+    },
+
+    "compute_transformer_derating": {
+      "signature": "compute_transformer_derating(pcc_data, rated_kva=200, n_evs_list=[1,3,5])",
+      "description": "Compute K-factor (Harmonic Loss Factor FHL) and derated transformer capacity.",
+      "equations": {
+        "FHL": "FHL = sum(I_n^2 * n^2 for all n including fundamental) / sum(I_n^2 for all n including fundamental)",
+        "derated_kva": "S_derated = S_rated / sqrt(FHL)",
+        "scaling_for_n_evs": "Simple linear scaling — multiply harmonic currents by n_evs before computing FHL. Note this ignores phase diversity cancellation — conservative overestimate."
+      },
+      "use_peak_values": "Compute FHL using harmonic currents at peak CC mode timestep.",
+      "validation": "For 1 EV, result should be close to Sivaraman 2021 reference of 196.63 kVA from 200 kVA base.",
+      "citation": "Sivaraman 2021 IEEE MASCON — derating reference values; K-factor methodology IEEE C57.110"
+    },
+
+    "validate_sivaraman": {
+      "signature": "validate_sivaraman()",
+      "description": "Module-level validation. Computes fundamental current for Sivaraman reference case and prints comparison. Run on module import.",
+      "expected_output": "Sivaraman validation: computed=62.XX A, measured=62.24 A, error=X.XX%",
+      "fail_threshold": "Warn if error > 2%"
+    },
+
+    "plot_pcc_analysis": {
+      "signature": "plot_pcc_analysis(data, pcc_data, compliance_results, derating_results, topology_name, preset_name, save_path=None)",
+      "style": "IEEE double-column (7.16 in wide), white background, Times New Roman, 300 DPI. Use setup_ieee_style().",
+      "layout": "2x2 gridspec",
+      "subplots": {
+        "top_left": {
+          "title": "Harmonic Current Injection at 440 V PCC",
+          "content": "Plot i_fundamental (black solid), h5 (black dashed), h7 (black dotted), h11 (black dash-dot), h13 (black loosely dashed). For single-phase only: also plot h3 (gray solid). Skip h3 and h9 for three-phase (they are zero).",
+          "x_axis": "Time (min)",
+          "y_axis": "Current (A)",
+          "add": "Vertical dashed line at CC→CV transition. Minor ticks on all axes."
+        },
+        "top_right": {
+          "title": "Total Demand Distortion vs. Time",
+          "content": "Plot TDD array (black solid line). Red dashed horizontal line at IS_16528_TDD_LIMIT_PCT (5%). Annotate peak TDD value.",
+          "x_axis": "Time (min)",
+          "y_axis": "TDD (%)",
+          "add": "Vertical dashed line at CC→CV transition."
+        },
+        "bottom_left": {
+          "title": "PCC Compliance — [applicable standard name]",
+          "content": "Grouped bar chart. For each harmonic order: dark gray bar = measured, light gray hatched bar = limit. Red edge on bar if failing, black edge if passing. Text box showing COMPLIANT or NON-COMPLIANT in PASS_COLOR or FAIL_COLOR.",
+          "x_axis": "Harmonic Order",
+          "y_axis": "Current (A) for IEC 61000-3-2; % for IEC 61000-3-12 and IEEE 519"
+        },
+        "bottom_right": {
+          "title": "Distribution Transformer Derating (200 kVA base)",
+          "content": "Bar chart: x-axis = [1 EV, 3 EVs, 5 EVs], y-axis = derated kVA. Horizontal black dashed line at rated_kva. Annotate each bar with kVA value. Footnote: 'Methodology: Sivaraman et al., IEEE MASCON 2021'.",
+          "x_axis": "Number of EVs Charging",
+          "y_axis": "Effective Transformer Capacity (kVA)"
+        }
+      },
+      "footer_caption": "Cite all four papers: Mariscotti 2022, Senol 2024, Lucas 2015, Sivaraman 2021",
+      "save": "fig4_pcc_harmonic_analysis.png at 300 DPI"
+    },
+
+    "run_pcc_analysis_for_preset": {
+      "signature": "run_pcc_analysis_for_preset(preset_name, topology, base_output_dir)",
+      "description": "Full workflow for one preset. Mirror structure of run_simulation_for_preset in ev_charging_sim.py.",
+      "terminal_output": [
+        "Charger preset and output folder header",
+        "Fundamental current at PCC: peak XX.X A, end of charge XX.X A",
+        "Peak harmonic currents (CC mode): h3=X.XX A, h5=X.XX A, h7=X.XX A, h9=X.XX A, h11=X.XX A, h13=X.XX A",
+        "Peak TDD: X.XX%, End TDD: X.XX%",
+        "Applicable standard: [standard name]",
+        "Compliance: PASS or FAIL with per-order breakdown",
+        "Transformer derating: 1 EV=XXX.XX kVA, 3 EVs=XXX.XX kVA, 5 EVs=XXX.XX kVA",
+        "Saved: fig4_pcc_harmonic_analysis.png"
+      ]
+    },
+
+    "main": {
+      "description": "Entry point with argparse. Same structure as ev_charging_sim.py main().",
+      "arguments": [
+        "--charger: default='all', choices=['all'] + list(CHARGER_PRESETS.keys())",
+        "--topology: default='Vienna + LLC Resonant (η=95.1%)', choices=list(TOPOLOGY_PROFILES.keys())",
+        "--output-dir: default same as ev_charging_sim.py"
+      ],
+      "note": "Can be run standalone or called from ev_charging_sim.py in future integration"
+    }
+  },
+
+  "critical_implementation_notes": {
+    "thd_profile_per_timestep": "compute_thd_profile() takes arrays. For the per-timestep calculation in compute_pcc_harmonic_currents, pass the full soc and mode arrays and get the THD array back, then index into it. Do not call it in a loop per timestep.",
+    "peak_index": "Use np.argmax(i_fundamental) to find the peak CC mode timestep for compliance and derating calculations.",
+    "zero_power_guard": "Add guard: if power_w < 1.0, set I_fundamental = 0 and all I_n = 0. Avoids division artifacts at simulation start.",
+    "pf_minimum_guard": "PF from power_factor_from_thd will never be zero but add a max(pf, 0.5) guard to avoid unrealistic values if THD data is malformed.",
+    "three_phase_triplen": "For three-phase presets, after computing I_n for all orders, explicitly set harmonic_currents[3] = 0.0 and harmonic_currents[9] = 0.0 array of zeros. Do this before TDD computation.",
+    "tdd_denominator": "I_L must be computed as np.max(i_fundamental) AFTER the full array is built — not inside the per-timestep loop. Recalculate TDD as a second pass.",
+    "avoid_duplicate_simulation": "run_pcc_analysis_for_preset should call simulate_charging() itself. Do not assume data is passed in — this makes the function self-contained like run_simulation_for_preset in file 1.",
+    "output_directory": "Reuse preset_output_dir() from ev_charging_sim to save fig4 in the same preset subfolder as fig1, fig2, fig3. Import it from ev_charging_sim."
+  },
+
+  "what_this_file_is_not": {
+    "not_a_replacement_for_opendss": "This file computes single-charger PCC harmonic injection. Multi-charger feeder aggregation and bus voltage distortion require opendssdirect — that is a future step.",
+    "not_measured_data": "Harmonic percentage values come from TOPOLOGY_PROFILES (literature-derived estimates). The calculation methodology is validated against Sivaraman 2021 measurements. The output is a derived calculation, not a field measurement.",
+    "not_file2": "File 2 shows topology harmonic fingerprints as normalized percentages (illustrative). File 3 shows actual amps injected at a specific grid voltage for a specific charger — these are different quantities."
+  },
+
+  "opendssdirect_connection": {
+    "description": "How file 3 connects to the planned OpenDSS feeder integration via opendssdirect Python library.",
+    "from_file_1": "data['power_kw'] time series → OpenDSS LoadShape object → attached to EV load bus",
+    "from_file_3": "pcc_data['harmonic_currents'] dict → OpenDSS harmonic load spectrum at that bus",
+    "from_file_3_also": "pcc_data['i_fundamental'] → fundamental current for load model sizing",
+    "opendssdirect_pattern": "dss.run_command('New Load.EV bus1=X kW=Y daily=EV_loadshape spectrum=EV_harmonic_spectrum')",
+    "note": "File 3 produces the harmonic spectrum definition. The spectrum object in OpenDSS takes harmonic order and magnitude pairs — exactly what harmonic_currents provides."
+  },
+
+  "literature_citations": {
+    "mariscotti_2022": {
+      "authors": "Mariscotti, A.",
+      "title": "Harmonic and Supraharmonic Emissions of Plug-In Electric Vehicle Chargers",
+      "journal": "MDPI Smart Cities",
+      "year": 2022,
+      "key_contribution": "IEC 61000-3-2 Class A absolute amp limits per harmonic order; Netherlands 9-vehicle compliance study; 13th–37th harmonic violations at 20–60% over limit",
+      "file": "smartcities-05-00027-v2.pdf"
+    },
+    "senol_2024": {
+      "authors": "Senol, M. and Bayram, I.S.",
+      "title": "Impact Assessment and Mitigation of Electric Vehicle Smart Charging Harmonics",
+      "journal": "IEEE Access",
+      "year": 2024,
+      "doi": "10.1109/ACCESS.2024.0429000",
+      "key_contribution": "8 EV model harmonic profiles; THD modelled as quadratic polynomial of charging power; single-phase vs three-phase dominant order rules; transformer aging under reduced charging rates",
+      "file": "IEEE_Access_2025.pdf"
+    },
+    "lucas_2015": {
+      "authors": "Lucas, A., Bonavitacola, F., Kotsakis, E., Fulli, G.",
+      "title": "Grid harmonic impact of multiple electric vehicle fast charging",
+      "journal": "Electric Power Systems Research",
+      "volume": 127,
+      "year": 2015,
+      "key_contribution": "TDD methodology for DC fast chargers; 67.5A nominal current; TDD=12% baseline; 6.1A per harmonic model; harmonic cancellation behavior; phase angle preferential clustering below 90 degrees",
+      "file": "Grid harmonic impact of multiple electric vehicle fast charging.pdf"
+    },
+    "sivaraman_2021": {
+      "authors": "Sivaraman, P., Sakthi Suriya Raj, J.S., Ajith Kumar, P.",
+      "title": "Power quality impact of electric vehicle charging station on utility grid",
+      "conference": "IEEE MASCON 2021",
+      "doi": "10.1109/MASCON51689.2021.9563528",
+      "key_contribution": "Indian 440V grid validation — 62.24A measured fundamental for 50kW charger; 200kVA transformer derating for 1/3/5 EVs; FFT dominant orders at 250Hz 350Hz 550Hz 650Hz on 50Hz grid; MATLAB Simulink modelling",
+      "file": "Power_quality_impact_of_electric_vehicle_charging_station_on_utility_grid11.pdf"
+    }
+  },
+
+  "testing_checklist": {
+    "description": "After building the file, run these checks before presenting to guide.",
+    "checks": [
+      "Run validate_sivaraman() — computed fundamental should be within 2% of 62.24A",
+      "Run with Bharat AC-001 preset — should show h3 non-zero (single-phase), compliance against IEC 61000-3-2 in amps",
+      "Run with AC Level 2 3-phase preset — h3 and h9 should be exactly 0.0 throughout",
+      "Run with DC Fast (60kW) preset — TDD at peak should be in the 10-15% range, consistent with Lucas 2015 reference of 12% at 67.5A",
+      "Run with DC Ultra-Fast (150kW) preset — peak fundamental should be approximately 150000/(440*1.732*0.989) ≈ 199A",
+      "Transformer derating for 1 EV should be close to 196.63 kVA reference from Sivaraman 2021",
+      "All six presets should produce fig4_pcc_harmonic_analysis.png without errors",
+      "Run all presets — no import errors, no circular import issues",
+      "Verify fig4 saves to same preset subfolder as fig1, fig2, fig3"
+    ]
+  }
+}

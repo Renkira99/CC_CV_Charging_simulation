@@ -8,7 +8,17 @@ and produces IEEE-style publication figures.
 
 import argparse
 import os
+import sys
 import warnings
+
+from runtime_bootstrap import bootstrap_runtime, open_files_in_default_app
+
+bootstrap_runtime(
+    script_file=__file__,
+    argv=sys.argv,
+    required_modules=('numpy', 'matplotlib'),
+    is_main=__name__ == '__main__',
+)
 
 import matplotlib
 matplotlib.use('Agg')
@@ -119,20 +129,22 @@ def compute_pcc_harmonic_currents(data, topology_name, preset_name, grid_voltage
     i_fundamental[valid] = power_w[valid] / denom[valid]
 
     harmonics_pct = TOPOLOGY_PROFILES[topology_name]['harmonics']
-    harmonic_currents = {}
-    for order in HARMONIC_ORDERS:
-        pct = float(harmonics_pct.get(order, 0.0))
-        harmonic_currents[order] = (pct / 100.0) * i_fundamental
+    h_pct_arr = np.array([float(harmonics_pct.get(order, 0.0)) / 100.0 for order in HARMONIC_ORDERS], dtype=float)
+    h_matrix = h_pct_arr[:, None] * i_fundamental[None, :]
 
     # Three-phase triplen cancellation (Senol 2024, Sivaraman 2021).
     if phases == 3:
-        harmonic_currents[3] = np.zeros_like(i_fundamental)
-        harmonic_currents[9] = np.zeros_like(i_fundamental)
+        for triplen in (3, 9):
+            triplen_idx = HARMONIC_ORDERS.index(triplen)
+            h_matrix[triplen_idx] = 0.0
+
+    harmonic_currents = {
+        order: h_matrix[idx]
+        for idx, order in enumerate(HARMONIC_ORDERS)
+    }
 
     i_l = float(np.max(i_fundamental)) if i_fundamental.size else 0.0
-    sum_sq = np.zeros_like(i_fundamental)
-    for order in HARMONIC_ORDERS:
-        sum_sq += harmonic_currents[order] ** 2
+    sum_sq = np.sum(h_matrix ** 2, axis=0)
 
     if i_l > 0:
         tdd = np.sqrt(sum_sq) / i_l * 100.0
@@ -150,12 +162,13 @@ def compute_pcc_harmonic_currents(data, topology_name, preset_name, grid_voltage
 
 def check_compliance(pcc_data, preset_name, topology_name):
     """Check worst-case compliance at peak fundamental current index."""
-    del topology_name  # Reserved for future topology-specific compliance extensions.
+    _ = topology_name  # Reserved for future topology-specific compliance extensions.
 
     standard = get_applicable_standard(preset_name)
     i_f = np.asarray(pcc_data['i_fundamental'], dtype=float)
     tdd = np.asarray(pcc_data['tdd'], dtype=float)
     h = pcc_data['harmonic_currents']
+    h_arrays = {order: np.asarray(h[order], dtype=float) for order in HARMONIC_ORDERS}
 
     peak_idx = int(np.argmax(i_f)) if i_f.size else 0
     i_f_peak = float(i_f[peak_idx]) if i_f.size else 0.0
@@ -165,14 +178,14 @@ def check_compliance(pcc_data, preset_name, topology_name):
 
     if standard == 'IEC_61000_3_2':
         for order in HARMONIC_ORDERS:
-            measured = float(np.asarray(h[order])[peak_idx]) if i_f.size else 0.0
+            measured = float(h_arrays[order][peak_idx]) if i_f.size else 0.0
             limit = float(IEC_61000_3_2_A[order])
             passed = measured <= limit
             results.append((order, measured, limit, 'A', passed))
 
     elif standard == 'IEC_61000_3_12':
         for order in HARMONIC_ORDERS:
-            measured_a = float(np.asarray(h[order])[peak_idx]) if i_f.size else 0.0
+            measured_a = float(h_arrays[order][peak_idx]) if i_f.size else 0.0
             measured_pct = (measured_a / i_f_peak * 100.0) if i_f_peak > 0 else 0.0
             limit_pct = float(IEC_61000_3_12_PCT[order])
             passed = measured_pct <= limit_pct
@@ -181,7 +194,7 @@ def check_compliance(pcc_data, preset_name, topology_name):
     else:
         # IEEE 519 / IS 16528 compliance is TDD-based at PCC.
         for order in HARMONIC_ORDERS:
-            measured_a = float(np.asarray(h[order])[peak_idx]) if i_f.size else 0.0
+            measured_a = float(h_arrays[order][peak_idx]) if i_f.size else 0.0
             measured_pct = (measured_a / i_f_peak * 100.0) if i_f_peak > 0 else 0.0
             limit_pct = IS_16528_TDD_LIMIT_PCT
             passed = measured_pct <= limit_pct
@@ -299,6 +312,7 @@ def plot_pcc_analysis(data, pcc_data, compliance_results, derating_results, topo
     harmonics = pcc_data['harmonic_currents']
     tdd = np.asarray(pcc_data['tdd'], dtype=float)
     std_name = compliance_results['standard_name']
+    phases = get_charger_phases(preset_name)
 
     transition_t = _cc_to_cv_transition_time(data)
 
@@ -308,7 +322,7 @@ def plot_pcc_analysis(data, pcc_data, compliance_results, derating_results, topo
 
     h_fund = ax_f.plot(time_min, i_f, color='black', linestyle='-', linewidth=1.3, label='Fundamental')
     h_list = []
-    if get_charger_phases(preset_name) == 1:
+    if phases == 1:
         h_list += ax_h.plot(time_min, harmonics[3], color=GRAYS[2], linestyle='-', linewidth=1.0, label='h3')
 
     h_list += ax_h.plot(time_min, harmonics[5], color='black', linestyle='--', linewidth=1.0, label='h5')
@@ -582,9 +596,9 @@ def main():
         print(f'  {d}')
     print('=' * 64)
 
-    if len(out_dirs) == 1 and os.uname().sysname == 'Darwin':
+    if len(out_dirs) == 1:
         fig_path = os.path.join(out_dirs[0], 'fig4_pcc_harmonic_analysis.png')
-        os.system(f'open "{fig_path}"')
+        open_files_in_default_app([fig_path])
 
 
 validate_sivaraman()

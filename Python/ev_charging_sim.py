@@ -4,16 +4,23 @@ Based on literature review of CC-CV charging characteristics
 References: IEEE TPEL 2023, IEEE TIE 2025, IEEE TTE 2024, Springer EE 2023
 """
 
-import numpy as np
-import os
 import argparse
+import os
+import sys
+import warnings
+
+from runtime_bootstrap import bootstrap_runtime, open_files_in_default_app
+
+bootstrap_runtime(
+    script_file=__file__,
+    argv=sys.argv,
+    required_modules=('numpy', 'matplotlib'),
+    is_main=__name__ == '__main__',
+)
+
 import matplotlib
 matplotlib.use('Agg')  # Non-interactive backend — saves to file
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-from matplotlib.patches import FancyBboxPatch
-from matplotlib.ticker import MultipleLocator
-import warnings
+import numpy as np
 warnings.filterwarnings('ignore')
 
 # Indian Grid Standard
@@ -134,8 +141,10 @@ def simulate_charging(bat=None, chg=None, dt=1.0):
     dt: time step in seconds
     Returns dict of time-series arrays.
     """
-    if bat is None: bat = BatteryConfig()
-    if chg is None: chg = ChargerConfig()
+    if bat is None:
+        bat = BatteryConfig()
+    if chg is None:
+        chg = ChargerConfig()
 
     v_max = bat.nominal_voltage * bat.v_max_ratio
     capacity_wh = bat.capacity_kwh * 1000
@@ -148,37 +157,47 @@ def simulate_charging(bat=None, chg=None, dt=1.0):
 
     # Storage
     time_s, voltage, current, power, soc, mode_arr = [], [], [], [], [], []
+    time_s_append = time_s.append
+    voltage_append = voltage.append
+    current_append = current.append
+    power_append = power.append
+    soc_append = soc.append
+    mode_append = mode_arr.append
+
+    # Cache loop-invariant limits/refs to reduce per-step overhead.
+    i_cable_limit = getattr(chg, 'cable_limit_a', chg.max_current_a)
+    i_temp_limit = getattr(chg, 'temp_limit_a', float('inf'))
+    i_evse_limit = getattr(chg, 'evse_max_limit_a', float('inf'))
+    i_charger_limit = chg.max_current_a
+
+    battery_ocv_fn = battery_ocv
+    internal_resistance_fn = internal_resistance
+    bms_current_limit_fn = bms_current_limit
+
     t = 0.0
     current_soc = bat.initial_soc
     last_cc_current = chg.max_current_a  # Track for CV entry continuity
-    last_cc_vterm = battery_ocv(bat.initial_soc, bat.nominal_voltage,
-                                bat.v_min_ratio, bat.v_max_ratio)  # Track for CV voltage ramp
+    target_soc = bat.target_soc
+    cc_cv_transition = chg.cc_cv_transition
 
-    while current_soc < bat.target_soc:
-        v_ocv = battery_ocv(current_soc, bat.nominal_voltage, bat.v_min_ratio, bat.v_max_ratio)
-        r_int = internal_resistance(current_soc, bat.nominal_voltage)
+    last_cc_vterm = battery_ocv_fn(bat.initial_soc, bat.nominal_voltage,
+                                   bat.v_min_ratio, bat.v_max_ratio)  # Track for CV voltage ramp
 
-        if current_soc < chg.cc_cv_transition:
+    while current_soc < target_soc:
+        v_ocv = battery_ocv_fn(current_soc, bat.nominal_voltage, bat.v_min_ratio, bat.v_max_ratio)
+        r_int = internal_resistance_fn(current_soc, bat.nominal_voltage)
+
+        if current_soc < cc_cv_transition:
             # === CP or CC MODE ===
             
             # 1. Power limit: I_power = P_max / V_term (quadratic formula accounts for actual terminal voltage)
             i_power = (-v_ocv + np.sqrt(v_ocv**2 + 4 * r_int * chg.max_power_w)) / (2 * r_int)
             
             # 2. BMS current acceptance limit (derates at high SoC)
-            i_bms = bms_current_limit(current_soc, ah_capacity)
-            
-            # 3. Cable current rating limitation
-            i_cable = getattr(chg, 'cable_limit_a', chg.max_current_a)
-            
-            # 4. Charger hardware capability
-            i_charger = chg.max_current_a
-            
-            # Additional EVSE and Thermal limit constraints (DIN 70121 / ISO 15118)
-            i_temp = getattr(chg, 'temp_limit_a', float('inf'))
-            i_evse = getattr(chg, 'evse_max_limit_a', float('inf'))
+            i_bms = bms_current_limit_fn(current_soc, ah_capacity)
             
             # The actual current delivered is the minimum of all constraints
-            i_cc = min(i_power, i_bms, i_cable, i_charger, i_temp, i_evse)
+            i_cc = min(i_power, i_bms, i_cable_limit, i_charger_limit, i_temp_limit, i_evse_limit)
             
             v_term = min(v_ocv + i_cc * r_int, v_max)       # cap at battery max voltage
             p = v_term * i_cc                               # actual delivered power
@@ -188,7 +207,7 @@ def simulate_charging(bat=None, chg=None, dt=1.0):
             # CP = power is genuinely binding when i_power is measurably below all hardware
             # limits. Level 2 AC: current limit binds first — CP essentially never fires.
             # DC fast: power often limits before cable/BMS — CP is the realistic label here.
-            other_limits = min(i_bms, i_cable, i_charger, i_temp, i_evse)
+            other_limits = min(i_bms, i_cable_limit, i_charger_limit, i_temp_limit, i_evse_limit)
             if i_power < other_limits - 1.0:
                 m = 'CP'
             else:
@@ -198,7 +217,7 @@ def simulate_charging(bat=None, chg=None, dt=1.0):
             # Ramp v_term from last CC terminal voltage → v_max over the first 10% of CV progress.
             # This eliminates the one-timestep power spike caused by jumping straight to v_max
             # while current is still at last_cc_current (before the exponential decay takes over).
-            progress = (current_soc - chg.cc_cv_transition) / max(bat.target_soc - chg.cc_cv_transition, 1)
+            progress = (current_soc - cc_cv_transition) / max(target_soc - cc_cv_transition, 1)
             v_term = min(last_cc_vterm + (v_max - last_cc_vterm) * min(progress * 10, 1.0), v_max)
             # CV exponent: 3.5 is appropriate for fast chargers (high C-rate → rapid
             # current acceptance decay). For slow chargers the same exponent cuts off too
@@ -216,16 +235,16 @@ def simulate_charging(bat=None, chg=None, dt=1.0):
             i_cc = i_cv  # reuse variable
             m = 'CV'
 
-        time_s.append(t)
-        voltage.append(v_term)
-        current.append(i_cc)
-        power.append(p)
-        soc.append(current_soc)
-        mode_arr.append(m)
+        time_s_append(t)
+        voltage_append(v_term)
+        current_append(i_cc)
+        power_append(p)
+        soc_append(current_soc)
+        mode_append(m)
 
         # Coulomb counting: SoC += (I * dt) / (Ah_total * 3600) * 100
         current_soc += ((i_cc * dt) / 3600) / ah_capacity * 100
-        current_soc = min(current_soc, bat.target_soc)
+        current_soc = min(current_soc, target_soc)
         t += dt
 
     return {
@@ -357,11 +376,11 @@ def main():
     # Pop up the output PNGs for single-preset runs only.
     if len(saved_dirs) == 1:
         preset_dir = saved_dirs[0]
-        os.system(
-            f'open "{preset_dir}/Figure_1_Charging_Profile.png" '
-            f'"{preset_dir}/Figure_2_Harmonic_Analysis.png" '
-            f'"{preset_dir}/Figure_3_Topology_Comparison.png"'
-        )
+        open_files_in_default_app([
+            os.path.join(preset_dir, 'Figure_1_Charging_Profile.png'),
+            os.path.join(preset_dir, 'Figure_2_Harmonic_Analysis.png'),
+            os.path.join(preset_dir, 'Figure_3_Topology_Comparison.png'),
+        ])
 
 
 if __name__ == '__main__':

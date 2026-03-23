@@ -8,6 +8,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.cache/
 
 # macOS
 .DS_Store
@@ -15,6 +16,10 @@ __pycache__/
 # IDEs
 .vscode/
 .idea/
+*.code-workspace
+
+# Generated simulation outputs
+Output/EV_Dynamic_Charging_Simulation_Results/**/fig4_pcc_harmonic_analysis.png
 
 # Potential build directories
 build/

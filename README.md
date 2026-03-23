@@ -17,6 +17,14 @@ The simulation is provided in two formats:
 
 ## Section 1 — Imports and Grid Constant
 
+## Python Environment Policy
+
+Use one project environment only: `venv/` at the repository root.
+
+- VS Code interpreter should be set to `venv/bin/python3`.
+- Integrated terminals should auto-activate `venv`.
+- If a stale `.venv/` exists from older runs, remove it to avoid mixed-package or mixed-architecture conflicts.
+
 ```python
 import numpy as np
 import matplotlib
@@ -382,22 +390,25 @@ Parses three command-line arguments:
 | `--topology` | `Vienna + LLC Resonant (η=95.1%)` | Any key in `TOPOLOGY_PROFILES` |
 | `--output-dir` | `../Output/EV_Dynamic_Charging_Simulation_Results` | Any valid path |
 
-Runs `run_simulation_for_preset()` for each selected preset. On single-preset runs, opens the three output figures automatically (macOS only — `open` command).
+Runs `run_simulation_for_preset()` for each selected preset. On single-preset runs, it attempts to open the output figures in the OS default viewer when available.
 
 **Example usage:**
 
 ```bash
+# First-time setup (project root)
+./venv/bin/python -m pip install -r requirements.txt
+
 # Run all presets with default topology
-python ev_charging_sim.py
+./venv/bin/python Python/ev_charging_sim.py
 
 # Run only DC Fast charger
-python ev_charging_sim.py --charger "DC Fast (60kW)"
+./venv/bin/python Python/ev_charging_sim.py --charger "DC Fast (60kW)"
 
 # Run with Diode Bridge topology
-python ev_charging_sim.py --topology "Diode Bridge + Boost PFC + Full-Bridge (η=91.2%)"
+./venv/bin/python Python/ev_charging_sim.py --topology "Diode Bridge + Boost PFC + Full-Bridge (η=91.2%)"
 
 # Specify custom output directory
-python ev_charging_sim.py --output-dir ./results
+./venv/bin/python Python/ev_charging_sim.py --output-dir ./results
 ```
 
 ---
@@ -417,10 +428,10 @@ This module computes actual harmonic currents in Amperes injected at the 440 V P
 
 ```bash
 # Run PCC analysis for all presets with default topology
-python pcc_harmonic_analysis.py
+./venv/bin/python Python/pcc_harmonic_analysis.py
 
 # Run only DC Fast charger
-python pcc_harmonic_analysis.py --charger "DC Fast (60kW)"
+./venv/bin/python Python/pcc_harmonic_analysis.py --charger "DC Fast (60kW)"
 ```
 
 ---
