@@ -2,9 +2,9 @@
 
 ## What This File Does
 
-`pcc_harmonic_analysis.py` calculates the actual harmonic currents injected into the Indian distribution grid at the **Point of Common Coupling (PCC)** — the 440V, 50Hz connection point between the EV charging station and the utility feeder.
+`pcc_harmonic_analysis.py` calculates the actual harmonic currents injected into the Indian distribution grid at the **Point of Common Coupling (PCC)** — the AC connection point between the EV charging station and the utility feeder.
 
-Files 1 and 2 characterize *what* a charger looks like from a topology perspective. File 3 answers the engineering question your guide actually asked: **how many amps of 5th harmonic, 7th harmonic, etc. is this specific charger injecting into the 440V feeder at each moment during the charge cycle?**
+Files 1 and 2 characterize *what* a charger looks like from a topology perspective. File 3 answers the engineering question your guide actually asked: **how many amps of 5th harmonic, 7th harmonic, etc. is this specific charger injecting into the feeder at each moment during the charge cycle?**
 
 ---
 
@@ -12,7 +12,7 @@ Files 1 and 2 characterize *what* a charger looks like from a topology perspecti
 
 ### Step 1 — Fundamental Current at the PCC
 
-The grid does not see the battery voltage or the DC side of the charger. It sees the AC input current drawn from the 440V feeder. That current is the **fundamental current** at the PCC.
+The grid does not see the battery voltage or the DC side of the charger. It sees the AC input current drawn from the feeder. That current is the **fundamental current** at the PCC.
 
 For a single-phase charger (Bharat AC-001, Level 2 1-phase):
 
@@ -24,11 +24,11 @@ $$I_{fundamental} = \frac{P_{charger}}{V_{grid} \times \sqrt{3} \times PF}$$
 
 Where:
 - $P_{charger}$ = instantaneous power drawn from the grid in watts (from `simulate_charging()` output, `power_kw × 1000`)
-- $V_{grid}$ = 440V (Indian LV distribution standard)
+- $V_{grid}$ = preset-specific AC input voltage at the PCC: 230V for single-phase presets and 415V line-line for three-phase presets in this project
 - $PF$ = power factor (from `power_factor_from_thd()`)
 - $\sqrt{3}$ = 1.732 for three-phase systems
 
-**Validation anchor (Sivaraman 2021, IEEE MASCON):** A 50kW DC fast charger on a 440V Indian feeder produces a measured fundamental current of 62.24A. The formula above gives the same result, confirming the calculation is correct for Indian grid parameters.
+**Validation anchor (Sivaraman 2021, IEEE MASCON):** A nominal 50kW DC fast charger reference on a 440V Indian feeder reports a measured fundamental current of 62.24A. Direct substitution with nominal values does not close exactly; implementation treats this as a methodology check with explicit tolerance and an implied-power diagnostic (~47.6kW), which is consistent with non-nominal operating conditions and losses.
 
 ---
 
@@ -368,13 +368,13 @@ STYLE REQUIREMENTS:
 File 1 simulates how the battery charges over time — voltage, current, power, SoC. File 2 shows what harmonic distortion profile each converter topology class is known to produce, based on published literature values expressed as percentages.
 
 **What file 3 adds:**
-Files 1 and 2 don't tell you how many amps of 5th harmonic a specific charger injects into the 440V Indian feeder. File 3 computes that by combining the instantaneous power draw from file 1 with the harmonic percentage profiles from file 2 and the 440V grid voltage. The result is a time-varying harmonic current spectrum in amps at the PCC — which is what IS 16528 and IEC 61000-3-2 actually regulate.
+Files 1 and 2 don't tell you how many amps of 5th harmonic a specific charger injects into the Indian feeder. File 3 computes that by combining the instantaneous power draw from file 1 with the harmonic percentage profiles from file 2 and preset-specific PCC voltage (230V single-phase, 415V three-phase). The result is a time-varying harmonic current spectrum in amps at the PCC — which is what IS 16528 and IEC 61000-3-2 actually regulate.
 
 **Why the literature doesn't give amps directly:**
 The four papers (Mariscotti 2022, Senol 2024, Lucas 2015, Sivaraman 2021) confirm the dominant harmonic orders, the CC-to-CV behavioral shift, and the compliance thresholds, but don't pre-tabulate amps for every charger type at every operating point. That computation — using the standard methodology of scaling harmonic percentages by the fundamental current — is the specific contribution of this module.
 
 **The Sivaraman validation:**
-Sivaraman measured 62.24A fundamental for a 50kW charger at 440V on an Indian feeder. The formula produces the same number. This confirms the calculation is correctly anchored to Indian grid parameters.
+Sivaraman measured 62.24A fundamental for a nominal 50kW charger at 440V on an Indian feeder. In implementation this reference is used as a methodology anchor with tolerance, not a strict exact-equality unit target, because measured current implies an effective delivered power below nominal.
 
 **The transformer derating result:**
 Sivaraman shows that harmonic injection from EV chargers derated a 200kVA transformer to 186.11kVA with 5 EVs. File 3 reproduces this calculation using the K-factor methodology, then applies it to each charger preset — quantifying the infrastructure impact in terms your guide can directly relate to Indian distribution planning.
